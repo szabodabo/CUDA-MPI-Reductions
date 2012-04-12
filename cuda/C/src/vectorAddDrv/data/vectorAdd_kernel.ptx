@@ -4,7 +4,7 @@
 	// nvopencc 4.1 built on 2012-01-12
 
 	//-----------------------------------------------------------
-	// Compiling /tmp/tmpxft_0000472c_00000000-9_vectorAdd_kernel.cpp3.i (/tmp/ccBI#.x9fZo3)
+	// Compiling /tmp/tmpxft_0000675b_00000000-9_vectorAdd_kernel.cpp3.i (/tmp/ccBI#.waMO7D)
 	//-----------------------------------------------------------
 
 	//-----------------------------------------------------------
@@ -17,7 +17,7 @@
 	//-----------------------------------------------------------
 
 	.file	1	"<command-line>"
-	.file	2	"/tmp/tmpxft_0000472c_00000000-8_vectorAdd_kernel.cudafe2.gpu"
+	.file	2	"/tmp/tmpxft_0000675b_00000000-8_vectorAdd_kernel.cudafe2.gpu"
 	.file	3	"/usr/lib64/gcc/x86_64-suse-linux/4.5/include/stddef.h"
 	.file	4	"/usr/local/cuda/4.1/cuda/include/crt/device_runtime.h"
 	.file	5	"/usr/local/cuda/4.1/cuda/include/host_defines.h"

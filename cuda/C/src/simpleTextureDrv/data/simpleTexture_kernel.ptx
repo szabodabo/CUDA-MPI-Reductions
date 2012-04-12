@@ -4,7 +4,7 @@
 	// nvopencc 4.1 built on 2012-01-12
 
 	//-----------------------------------------------------------
-	// Compiling /tmp/tmpxft_000044e0_00000000-9_simpleTexture_kernel.cpp3.i (/tmp/ccBI#.d1HINj)
+	// Compiling /tmp/tmpxft_0000650f_00000000-9_simpleTexture_kernel.cpp3.i (/tmp/ccBI#.5jjAEV)
 	//-----------------------------------------------------------
 
 	//-----------------------------------------------------------
@@ -17,7 +17,7 @@
 	//-----------------------------------------------------------
 
 	.file	1	"<command-line>"
-	.file	2	"/tmp/tmpxft_000044e0_00000000-8_simpleTexture_kernel.cudafe2.gpu"
+	.file	2	"/tmp/tmpxft_0000650f_00000000-8_simpleTexture_kernel.cudafe2.gpu"
 	.file	3	"/usr/lib64/gcc/x86_64-suse-linux/4.5/include/stddef.h"
 	.file	4	"/usr/local/cuda/4.1/cuda/include/crt/device_runtime.h"
 	.file	5	"/usr/local/cuda/4.1/cuda/include/host_defines.h"
