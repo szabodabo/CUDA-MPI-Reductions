@@ -1,2 +1,4 @@
-#define NUM_INTS = 512 * 1024 * 1024
-#define NUM_DOUBLES = 256 * 1024 * 1024
+#define NUM_INTS 512*1024*1024
+#define NUM_DOUBLES 256*1024*1024
+#define CLOCK_RATE 2666700000.0 //change to 700000000.0 for Blue Gene/L
+#define RETRY_COUNT 5
