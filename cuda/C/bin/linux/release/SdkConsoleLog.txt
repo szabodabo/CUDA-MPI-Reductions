@@ -1,0 +1,14 @@
+./matrixMul
+	Starting (CUDA and CUBLAS tests)...
+
+
+Using Matrix Sizes: A(1280 x 1920), B(1280 x 1280), C(1280 x 1920)
+
+Runing Kernels...
+
+> CUBLAS         838.2945 GFlop/s, Time = 0.00751 s, Size = 6291456000 Ops
+
+> CUDA matrixMul 233.5520 GFlop/s, Time = 0.02694 s, Size = 6291456000 Ops, NumDevsUsed = 1, Workgroup = 1024
+
+Comparing GPU results with Host computation...
+

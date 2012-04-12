@@ -1,0 +1,435 @@
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+NVIDIA CUDA Toolkit v4.1 RC1 Release Notes for Windows, Linux, and Mac OS X
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+--- Contents:
+-------------
+--- Documentation
+--- List of important files
+--- Supported NVIDIA hardware
+--- Supported Operating Systems for:
+------ Windows
+------ Linux
+------ Mac OS X
+--- Installation Notes
+--- Known Issues
+--- New Features
+--- Performance Improvements
+--- Resolved Issues
+--- Source code for Open64 and cuda-gdb
+--- Revision History
+--- More information 
+
+This release contains:
+* NVIDIA CUDA Toolkit documentation
+* NVIDIA OpenCL documentation
+* NVIDIA CUDA compiler (nvcc) and supporting tools
+* NVIDIA CUDA runtime libraries
+* NVIDIA CUBLAS, CUFFT, CUSPARSE, CURAND, Thrust, and NPP libraries
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Documentation
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+For a list of documents supplied with this release, please refer to the /doc directory of your CUDA Toolkit installation.
+For issues related to the Visual Profiler, please refer to the Visual Profiler release notes for the specific platform and the Visual Profiler change log-"Changelog.txt".
+----
+Note: For this release, some installed documents may be in draft form or may refer to the previous version . 
+----
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+List of important files
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+  bin/
+    nvcc                       CUDA C/C++ compiler
+    cuda-gdb                   CUDA Debugger
+    cuda-memcheck              CUDA Memory Checker
+    nvvp                       NVIDIA Visual Profiler 
+
+  include/
+    cuda.h                     CUDA driver API header
+    cudaGL.h                   CUDA OpenGL interop header for driver API
+    cudaVDPAU.h                CUDA VDPAU interop header for driver API (Linux only)
+    cuda_gl_interop.h          CUDA OpenGL interop header for toolkit API (Linux only)
+    cuda_vdpau_interop.h       CUDA VDPAU interop header for toolkit API (Linux only)
+    cudaD3D9.h                 CUDA DirectX 9 interop header (Windows only)
+    cudaD3D10.h                CUDA DirectX 10 interop header (Windows only)
+    cudaD3D11.h                CUDA Directx 11 interop header (Windows only)
+    cufft.h                    CUFFT API header
+    cublas_v2.h                CUBLAS API header 
+    cublas.h                   CUBLAS Legacy API header 
+    cusparse_v2.h              CUSPARSE API header 
+    cusparse.h                 CUSPARSE Legacy API header
+    curand.h                   CURAND API header
+    curand_kernel.h            CURAND device API header
+    thrust/*                   Thrust Headers
+    npp.h                      NPP API Header
+    nvcuvid.h                  CUDA Video Decoder header (Windows and Linux)
+    cuviddec.h                 CUDA Video Decoder header (Windows and Linux)
+    NVEncodeDataTypes.h        CUDA Video Encoder (C-library or DirectShow) required for
+                               projects (Windows only)
+    NVEncodeAPI.h              CUDA Video Encoder (C-library) required for projects
+                               (Windows only)
+    INvTranscodeFilterGUIDs.h  CUDA Video Encoder (DirectShow) required for projects
+                               (Windows only)
+    INVVESetting.h             CUDA Video Encoder (DirectShow) required for projects
+                               (Windows only)
+
+  extras/
+    CUPTI                      CUDA Profiling APIs
+    Debugger                   CUDA Debugger APIs
+
+------------------
+Windows lib files
+------------------
+  lib/
+    cuda.lib                   CUDA driver library
+    cudart.lib                 CUDA runtime library
+    cublas.lib                 CUDA BLAS library
+    cufft.lib                  CUDA FFT library
+    cusparse.lib               CUDA Sparse Matrix library
+    curand.lib                 CUDA Random Number Generation library
+    npp.lib                    NVIDIA Performance Primitives library
+    nvcuvenc.lib               CUDA Video Encoder library
+    nvcuvid.lib                CUDA Video Decoder library
+------------------
+Linux lib files
+------------------
+ lib/
+    libcuda.so                 CUDA driver library
+    libcudart.so               CUDA runtime library
+    libcublas.so               CUDA BLAS library
+    libcufft.so                CUDA FFT library
+    libcusparse.so             CUDA Sparse Matrix library
+    libcurand.so               CUDA Random Number Generation library
+    libnpp.so                  NVIDIA Performance Primitives library
+------------------
+Mac OS X lib files
+------------------
+  lib/
+    libcuda.dylib              CUDA driver library
+    libcudart.dylib            CUDA runtime library
+    libcublas.dylib            CUDA BLAS library
+    libcufft.dylib             CUDA FFT library
+    libcusparse.dylib          CUDA Sparse Matrix library
+    libcurand.dylib            CUDA Random Number Generation library
+    libnpp.dylib               NVIDIA Performance Primitives library
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Supported NVIDIA Hardware
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+* See http://www.nvidia.com/object/cuda_gpus.html
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Supported Operating Systems for Windows, Linux, and MAC OS X
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+------------------
+Windows
+------------------
+* Supported Operating Systems (32-bit and 64-bit)
+ - WinServer 2008  
+ - WinXP 
+ - VistaWin7 	
+ - Visual Studio 2010 
+ - Visual Studio 2008 
+ - Visual Studio 2005 
+
+* Supported Compilers
+--------   --------         ---       
+Platform   Compiler         IDE       
+--------   --------         ---       
+Windows    MSVC8(14.00)     VS 2005   
+Windows    MSVC9(15.00)     VS 2008   
+Windows    MSVC2010(16.00)  VS 2010   
+
+------------------
+Linux 
+------------------
+The CUDA development environment relies on tight integration with the host development environment- including the host compiler and C runtime libraries, and is therefore only supported on distro versions that have been qualified for this CUDA Toolkit release. 
+--------------------------------------------------------------------------------
+* Supported Distros
+--------------------------------------------------------------------------------
+------            -- --  ------             ---         -----         
+Distro            32 64  Kernel             GCC         GLIBC         
+------            -- --  ------             ---         -----         
+Fedora14          X  X   2.6.35.6-45        4.5.1       2.12.90  
+ICC Compiler 11.1 X  X 
+ICC Compiler 11.1 X  X
+OpenSUSE-11.2     X  X   2.6.31.5-0.1       4.4.1       2.10.1      
+RHEL-5.>=5        X  X   2.6.18-238.el5     4.1.2       2.5 
+(5.5, 5.6, 5.7) 	 
+RHEL-6.X             X   2.6.32             4.4.5       2.12 
+(6.0, 6.1)               -131.0.15.el6
+SLES 11.1         X  X   2.6.32.12-0.7-pae  4.3-62.198  2.11.1-0.17.4
+Ubuntu-10.04      X  X   2.6.35-23-generic  4.4.5       2.12.1 
+Ubuntu-11.04      X  X   2.6.38-8-generic   4.5.2       2.13 
+
+* Distros Not Supported
+------            -- --  ------             ---         -----         
+Distro            32 64  Kernel             GCC         GLIBC         
+------            -- --  ------             ---         -----         
+Fedora13          X  X   2.6.33.3-85        4.4.4       2.12            
+RHEL-4.8          X      2.6.9-89.ELsmpl    3.4.6       2.3.4
+Ubuntu-10.10      X  X   2.6.35-23-generic  4.4.5       2.12.1        
+
+Note that 32-bit versions of RHEL 4.8 and RHEL 6.0 have not been tested with this release and are therefore not supported in this CUDA Toolkit release.  
+
+--------------------------------------------------------------------------------
+------------------
+Mac OS X Support
+------------------
+--------          -- --  ------     ---                    
+Platform          32 64  Kernel     GCC                     
+--------          -- --  ------     ---                    
+Mac OS X 10.7      X  X  10.0.0     4.2.1 (build 5646)
+			                                    XCode 4.1               
+Mac OS X 10.6      X  X  10.0.0     4.2.1 (build 5646)     
+
+------------------
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Installation Notes
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Windows:
+Silent Installation:
+Install using msiexec.exe from the shell and pass the following arguments:
+msiexec.exe /i cudatoolkit.msi /qn
+To uninstall:
+Use /x instead of /i 
+--------------------------------------------------------------------------------
+Linux: 
+On some Linux releases, due to a GRUB bug in the handling of upper memory and a default vmalloc too small on 32-bit systems, it may be necessary to pass this information to the bootloader:
+
+vmalloc=256MB, uppermem=524288
+
+Example of grub conf:
+
+title Red Hat Desktop (2.6.9-42.ELsmp)
+root (hd0,0)
+uppermem 524288
+kernel /vmlinuz-2.6.9-42.ELsmp ro root=LABEL=/1 rhgb quiet vmalloc=256MB
+pci=nommconf
+initrd /initrd-2.6.9-42.ELsmp.img
+
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Known Issues
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+* cudaHostUnregister returns previous errors after kernel synchronization and cudaGetLastError 
+
+* The gpu start timestamp value in the profiler output can have an incorrect value of zero for some kernel launches or memory transfers. In such cases a warning is displayed and all profiler rows with an incorrect gpu start timestamp value are dropped resulting in an incomplete profiling output. 
+
+* The CUDA driver creates worker threads on all platforms, and this can cause issues at process cleanup in some multithreaded applications on all supported operating systems. 
+On Linux, for example, if an application spawns multiple host pthreads, calls into CUDART, and then exits all user-spawned threads with pthread_exit(), the process may never terminate. Driver threads will not automatically exit once the user's threads have gone down. 
+The proper solution is to either:
+(1) call cudaDeviceReset() on all used devices before termination of host threads, or,
+(2) trigger process termination directly (i.e, with exit()) rather than relying on the process to die after only user-spawned threads have been individually exited. 
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+New Features in CUDA Release 4.1
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+-------------
+CUDA Runtime 
+-------------
+* For MPI implementations like Open MPI, cross process P2P has been enabled. 
+The cuIpc functions are designed to allow efficient shared memory communication and synchronization between CUDA processes. cuIpcGetEventHandle and cuIpcGetMemHandle get an opaque handle that can be freely copied and passed between processes on the same machine. The accompanying cuIpcOpenEventHandle and cuIpcOpenMemHandle functions allow processes to map handles to resources created in other processes.
+
+Equivalent runtime API functions are available. 
+
+--------------------------------------------------------------------------------
+Compiler Related
+--------------------------------------------------------------------------------
+* The nvcc compiler switch, --fmad (short name: -fmad), to control the contraction of floating-point multiplies and add/subtracts into floating-point multiply-add operations (FMAD, FFMA, or DFMA) has been added: 
+--fmad=true and --fmad=false enables and disables the contraction respectively. 
+This switch is supported only when the --gpu-architecture option is set with compute_20, sm_20, or higher. For other architecture classes, the contraction is always enabled. 
+The --use_fast_math option implies --fmad=true, and enables the contraction.
+
+* For target architecture sm_2x, a new compiler component 'cicc' is used instead of 'nvopencc'. 
+
+* PTX version 3.0 is used for target architectures sm_2x. PTX version 1.4 is used for target architectures sm_1x. 
+
+* nvcc --cuda compiles the .cu input files to output files with the .cu.cpp.ii  (instead of .cu.cpp) file extension in this release. This change has been made in order to avoid triggering an implicit rule in GNU Make which deletes the .cu files. Note also that  nvcc --keep produces the .cu.cpp.ii as one of the intermediate files, instead of the .cu.cpp output.
+
+* Note: The nvcc option '-Xopencc' is deprecated. 
+
+--------------------------------------------------------------------------------
+CUDA Libraries
+--------------------------------------------------------------------------------
+
+* In CUDA Toolkit version 4.1, the Thrust library supports the version of transform_if that does not require a "stencil" range. This was missing in previous releases.
+
+* In previous releases of the CUDA toolkit, the CUFFT library included compiled kernel PTX and compiled kernel binaries for compute capability 1.0, 1.3 and 2.0. Starting with this release, the compiled kernel PTX will only be shipped for the highest supported compute capability (i.e., 2.0 for this release). This results in a significant reduction of file size for the dynamically linked libraries for all platforms. 
+Note: there is no change to the compiled kernel binaries.
+
+* The CUFFT Library now supports the advanced data layout parameters inembed, istride, idist, onembed, ostride and odist, as accepted by the cufftPlanMany() API, for real-to-complex (R2C) and complex-to-real (C2R) transforms. The previous release only supported these parameters for complex-to-complex (C2C) transform. Please refer to the CUFFT documentation for more details. 
+
+
+* The CURAND library supports the MTGP32 pseudo-random number generator, which is a member of the Mersenne Twister family of generators. 
+
+* The CUSPARSE library now provides a routine (csrsm) to perform a triangular solve with multiple right-hand-sides. This routine will generally perform better than calling a single triangular solve multiple times, once for each right-hand-side.
+
+* The sparse triangular solve (csrsv_analysis and csrsv_solve routines) can now accept a general sparse matrix and work only on its triangular part. In the previous release, the csrsv routines would only accept matrices where the MatrixType was set to TRIANGULAR. Now, it can accept matrices of type GENERAL, but only operate on the triangular portion indicated by the FillMode setting (UPPER or LOWER).
+In addition, the sparse triangular solve can now ignore the diagonal elements by assuming that they are unity. The diagonal elements must be always present in the matrix, but will be assumed to be unity when the user sets the DiagType field in the matrix descriptor to be UNIT. This is particularly useful when processing sparse matrices where the lower and upper triangular parts have been stored together in a single general matrix. 
+
+* The cusparseXgtsv() and cusparseXgtsvStridedBatch() routines have been added to the CUSPARSE library in order to support solving linear systems represented by tri-diagonal sparse matrices. 
+
+* The CUSPARSE library now supports a Hybrid matrix storage format based on the ELL and COO formats. This format usually provides a significant speedup for the sparse matrix-vector multiplication operation compared to the CSR matrix storage format. Since the format is implemented using an opaque datatype (cusparseHybMat_t), users cannot directly view nor operate on matrices in this format. The dense2hyb and csr2hyb conversion functions are provided to convert an existing matrix into the Hybrid format. Matrix-vector multiplication can be performed on Hybrid matrices using the hybmv routine and a triangular solve can be performed using the hybsv routine.
+
+* The CUSPARSE Library now supports a new API for certain routines that allows an application to more easily take advantage of parallelism using streams. In particular, the new API accepts and returns certain scalar parameters by reference to device or host memory instead of by value on the host. This allows these APIs to execute asynchronously without blocking the caller host thread.
+The new APIs are exposed in the header file cusparse_v2.h. The older forms of the APIs are still supported and are exposed in the header file cusparse.h. 
+Existing applications that use the CUSPARSE library can be recompiled and linked against the legacy version of CUSPARSE without any changes to the existing application source code. Furthermore, the binary interface for these older routines are still available as entry points into the CUSPARSE .so and .dll.
+NVIDIA recommends that new applications use the new API and that existing applications that need maximum stream parallelism be converted to the new API. Refer to CUSPARSE Library documentation (doc/CUSPARSE_Library.pdf) which has been rewritten to focus on the new APIs. Some treatment of the older APIs is still included. 
+
+* The CUBLAS library now supports a "batched" matrix multiply routine, cublas{S,D,C,Z}gemmBatched, that multiplies two arrays of matrices and produces another array of matrices. This API will multiply all of the matrices in a single launch and can improve performance compared to multiplying each pair of matrices with a separate call to the GEMM routine, especially for smaller matrices.
+
+* Added new Graphcut primitive that supports regular 8-neighborhood graphs to enable higher fidelity computations (nppiGraphcut8_32s8u*). In addition, the existing primitive that supports 4-neighborhood graphs (nppiGraphcut_32s8u*) has been significantly optimized.
+
+* In previous releases of the CUDA Toolkit, the NPP library included compiled kernel PTX and compiled kernel binaries for compute capability 1.0, 1.3 and 2.0. Starting with this release, the compiled kernel PTX will only be shipped for the highest supported compute capability (i.e., 2.0 for this release). This results in a significant reduction of file size for the dynamically linked libraries for all platforms. Note that there is no change to the compiled kernel binaries.
+
+* Almost 1,000 new image processing primitives have been added to the NPP library (in nppi.h) for arithmetic and logical operations. As of this release, the NPP library has broad coverage for these types of image operations on formats that have 1 component, 2 components with alpha, 3 components, 4 components, and 4 components with alpha, where the component sizes are 8-, 16-, and 32-bit integer or 32-bit floating point. 
+
+* The CURAND library now supports L'Ecuyer's MRG32k3a pseudo-random number generator. 
+ 
+* The CURAND library in the previous releases would dynamically allocate memory for internal usage within the curandCreateGenerator() API when it would create an XORWOW generator, and it would deallocate the memory for that generator within the curandDestroyGenerator() API. Starting with this release, the memory is allocated and deallocated dynamically each time the curandGenerateSeeds() API is called on an XORWOW generator, so that the dynamically allocated memory is not tied up for the entire life of an XORWOW generator. 
+
+* The CUDA math library now supports Bessel functions of the first and second kinds of orders 0, 1, and n, both in single and double precision. These can be accessed via the j0f, j1f, jnf, y0f, y1f, and ynf functions in single precision and j0, j1, jn, y0, y1, and yn functions in double precision. Please refer to Appendix C in the CUDA C Programming Guide (CUDA_C_Programming_Guide.pdf) and the relevant entries in the CUDA Toolkit Reference Manual (Cuda_Toolkit_Reference_Manual.pdf) for more information. 
+
+* The scaled complementary error function has been added to math.h. This is equivalent to exp(x*x)*erfc(x). The double-precision routine is exposed as erfcx() and the single-precision routine as erfcxf(). 
+
+* New functions for halving addition and rounded halving addition for 32-bit signed and unsigned integers have been added to the math header files. These new functions perform the addition and halving without overflow in the intermediate sum. They are available as __{u}{r}hadd(). Please refer to the CUDA C Programming Guide for more details. 
+
+--------------------------------------------------------------------------------
+CUDA Driver
+--------------------------------------------------------------------------------
+
+* For 2D texture references bound to pitched memory, the pitch has to be aligned to the HW specific texture pitch alignment attribute. 
+This value can be queried using the device attribute:
+- CU_DEVICE_ATTRIBUTE_TEXTURE_PITCH_ALIGNMENT in the driver API
+- cudaDeviceProp::texturePitchAlignment in the runtime API.
+If a misaligned pitch is specified the following error will be returned:
+- CUDA_ERROR_INVALID_VALUE in the driver API
+- cudaErrorInvalidValue in the runtime API. 
+
+* In the CUDA Driver, cuMemHostRegister and cudaHostRegister now accept memory ranges with arbitrary size and alignment; cuMemHostRegister and cudaHostRegister are still restricted to non-overlapping memory ranges.
+
+* Cubemaps can be created by specifying the flag "cudaArrayCubemap" during CUDA array creation. Cubemap Layered CUDA arrays can be created by specifying two flags - "cudaArrayCubemap" and "cudaArrayLayered". New intrinsics have been added to perform texture fetches. e.g. calling "texCubemap(texRef, x, y, z)" fetches from a cubemap texture.
+
+* For changes related to NVSMI and NVML, please refer to nvidia-smi man page and the "Tesla Deployment Kit" package (found on the developer site) which includes NVML documentation and the SDK.
+
+* CUDA-OpenGL interop API now allows querying the device on which OpenGL is running. If SLI is enabled, the application can query the current rendering device on a per-frame basis. For more information, refer to the CUDA API Reference Manual and the CUDA C Programming Guide.
+
+* 1D Layered, 2D Layered and 3D surfaces can now be bound to surface references. New intrinsics have been added to perform loads/stores to such surfaces . For example, "surf3Dread(data, surfref, x, y, z)" reads from a location (x, y, z) of a 3D surface.
+
+* Texture gather operations can now be performed on 2D CUDA arrays by specifying a flag "cudaArrayTextureGather" during CUDA array creation. Texture gather allows obtaining the bilerp footprint of a regular texture fetch. New intrinsics of the form "tex2Dgather(texref, x, y, comp)" have been added, where 'comp' can be one of {0,1,2,3} to indicate the component to be fetched.
+
+* Added the ability to use assert() within kernels. This features is supported only on the Fermi architecture.
+Note: Assertions in device code will not work on versions of OS X before 10.7. Modules which use assert will fail to load.
+
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Performance Improvements in CUDA Release 4.1
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+* Various performance improvements have been made to the device reduction and host sorting algorithms in the Thrust library. A new CUDA reduce_by_key implementation provides up to 3x faster performance. A faster host sort provides up to 10x faster performance for sorting arithmetic types on (single-threaded) CPUs. A new OpenMP sort provides up to 3x speedup over the single-threaded host sort using a quad-core CPU. When sorting arithmetic types with the OpenMP backend the combined performance improvement is ~6x for 32-bit integers and ranges from 3x (64-bit types) to more than 10x (8-bit types). 
+
+* The performance of double precision floating-point square-root has been significantly optimized for the Tesla and Fermi architectures for the default rounding mode (IEEE round-to-nearest), accessible via the sqrt() math function or the __dsqrt_rn() intrinsic.
+ 
+* The double-precision cosh() math library routine has been optimized for both the Tesla and Fermi architectures.
+
+* Single-precision floating-point reciprocal has been optimized significantly for the Fermi architecture for all four IEEE rounding modes. This improvement applies to the '1/x' operator in C, when compiled with the compiler defaults, or when -prec-div=true is explicitly specified on the nvcc command-line. In addition, this improvement applies to the __frcp_{rn,rz,ru,rd}() intrinsics.  
+
+* Single-precision square-root has been optimized significantly for the Fermi architecture for all four IEEE rounding modes. This improvement applies to the sqrtf() math function when compiled with the compiler defaults, or when -prec-sqrt=true is explicitly specified on the nvcc command-line. In addition, this improvement applies to the __fsqrt_{rn,rz,ru,rd}() intrinsics. 
+
+
+* IEEE-754 compliant single-precision floating-point division for the default rounding mode (round-to-nearest-or-even) has been accelerated significantly for the Fermi architecture. This operation is generated for the single-precision division operator '/' when building with the compiler defaults, or when -prec-div=true is explicitly specified on the nvcc command line. In addition it is accessible via the __fdiv_rn() intrinsic."
+
+* The erfcf() function has been optimized for the Fermi architecture. With the compiler defaults for Fermi (-prec-div=true and -no-ftz=true), the function executes at twice the speed of the previous implementation, although exact observed performance improvement will depend on the specific application code that calls erfcf(). 
+
+* The accuracy of the double-precision erfinv() math library routine has been improved from a worst-case error bounds of 8 ULPs (units in the last place) over the full range of inputs to only 5 ULPs. 
+
+* The cublasXgemv() routines in the CUBLAS library have been optimized, specifically for non-square matrices when the number of columns is much greater than the number of rows.  
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Resolved Issues
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+* In the NPP library, the two quantization-table initialization functions used for JPEG compression, nppiQuantFwdTableInit_JPEG_8u16u() and nppiQuantInvTableInit_JPEG_8u16u(), expect an input quantization table in a zigzaged format as described in the JPEG standard. However, now the resulting tables are de-zigzaged; this was not true in previous versions. The de-zigzaged result tables are in the proper format for use with the nppiDCTQuantFwd8x8LS_JPEG_8u16s_C1R() or nppiDCTQuantInv8x8LS_JPEG_16s8u_C1R() routines. User programs should not see any functional difference if they never inspect the output of nppiQuantFwdTableInit_JPEG_8u16u() or nppiQuantInvTableInit_JPEG_8u16u(), and simply pass the output to the DCT functions listed earlier. 
+
+* In previous versions of the NPP Library, the Rotate primitives set pixel values inside the destination ROI to 0 (black) if there is no pixel value from the source image that corresponds to a particular destination pixel. This incorrect behavior has been fixed. Now, these destination pixels are left untouched so that they stay at the original background color. 
+
+* In previous releases of the NPP Library, the Signal primitives in the Arithmetic, Logical and Shift, and Vector Initialization families would fail for signals beyond a certain size. In this release, these primitives should be function correctly for signals of any size- assuming of course that the input and output signals have been successfully allocated within the available GPU memory. 
+
+* In the previous release, the NPP Color Conversion primitives did not work properly for line strides that were not 64 byte aligned. In particular the P3R, P3P2R, P3C3 variants of those primitives were affected. This issue is now fixed. 
+
+* In the previous release of the NPP library, the nppiMinMax_8u_C4R function would erroneously provide copies of the result from the first channel in the 2nd, 3rd, and 4th channels. So the result would be {min(channel1), min(channel1), min(channel1), min(channel1)} and not {min(channel1), min(channel2), min(channel3), min(channel4)}, and similar for the maximums. This bug has been fixed in this release of the NPP library. 
+
+* The Thrust library is now thread-safe, and hence the various Thrust APIs can all be called safely from multiple concurrent host threads. 
+
+* The device_ptr<void> datatype in Thrust now requires an explicit case to convert to device_ptr<T>, where T != void. Use the expression device_pointer_cast(static_cast<int*>(void_ptr.get())) to convert, for example, device_ptr<void> to device_ptr<int>. Existing code that used to unsafely convert without an explicit case will no longer compile.
+ 
+* The previous version of the cublasXnrm2() routines in the CUBLAS library could produce NaNs in the output incorrectly in some cases when the input contained at least one denormal value. This has been fixed in the current release. 
+
+* Useful error codes added:
+-CUDA_ERROR_HOST_MEMORY_ALREADY_REGISTERED (cudaErrorHostMemoryAlreadyRegistered) will be returned when user calls cuMemHostRegister (cudaHostRegister) on memory registered by a previous call to cuMemHostRegister (cudaHostRegister).
+-CUDA_ERROR_HOST_MEMORY_NOT_REGISTERED (cudaErrorHostMemoryNotRegistered) will be returned when user calls cuMemHostUnregister (cudaHostUnregister) on memory not registered by any previous call to cuMemHostRegister (cudaHostRegister). 
+
+
+* In previous releases, the curand_precalc.h header file described a large array in a single line with no newlines, which can cause problems with some source control systems. In this release, newlines have been added periodically throughout the file.
+
+* In previous releasescuMemsetD2D16/32 failed in some corner cases. This has been fixed in this release.
+
+* In the previous release, for GPUs with compute capability 2.0 and higher the potential occupancy was calculated assuming the default cache configuration i.e. 48KB of shared memory. If the cache configuration changed, it would lead to a difference between 'Occupancy' in the profiler table and potential occupancy. Also it would affect the following fields in the Kernel Occupancy Analysis: Shared Memory Ratio, Potential Occupancy, Occupancy limiting factor. 
+This has been resolved in the release. The 'Occupancy' in the profiler table is correctly calculated based on the actual cache configuration setting used for each kernel launch. The command line profiler option "cacheconfigexecuted" can be used to determine the cache configuration for each kernel launch. Refer to the Visual Profiler User Guide for details about this command line profiler option. 
+
+* In the previous version (v4.0) of the CUBLAS library, the routine cublas_Xgemv() with the "trans" parameter NOT set to CUBLAS_OP_N, returned incorrect numeric results for the output vector "y", if the number of columns of the input matrix A exceeded 2097120 for cublas_Sgemv() or 1048560 for the other datatypes. The issue is now resolved in this version (v4.1) of CUBLAS. 
+
+* The CUBLAS library in v4.0 of the CUDA Toolkit had added support for a new API. The older API was still supported via a header file, but the entry points were removed from the CUBLAS .so and .dll. While existing source code written in C/C++ was still backwards compatible after a simple recompile, compatibility was broken for projects that were directly using the entry points (i.e., the binary interface) of the .so and .dll. In this release, the old entry points have been added back into the .so and .dll to provide better compatibility for such projects. Now the .so and .dll contain entry points for both the new and old APIs. 
+
+* In certain cases, the thrust::adjacent_difference() operation in the previous release would produce incorrect results when operating in-place. This has been fixed in the Thrust library in the current release. 
+
+* Previous releases of the CUFFT library were not thread-safe, and hence could not be accessed concurrently from multiple threads in the same process. This has been fixed in the current release. Once created, any plan can be accessed safely from any thread in the same process until the plan is destroyed.
+
+* In previous releases of the CUFFT Library, certain configurations would produce slightly different results for the same input when ECC is on versus when ECC is off (though both were within the expected tolerance compared to the infinite precision mathematically correct reference). In this release, the results are now identical for the same configuration whether ECC is on or off. 
+
+* A possible bug associated with cuFFT occurred if GTX480 and GT240 are both present in system. This is no longer the case. 
+
+* The host linker on Mac OS X generates position-independent executables by default, unless the target platform is Mac OS X 10.6 or earlier. Since cuda-gdb does not support position-independent executables, nvcc passes -no_pie to the host linker and generates position-dependent executables. With this release, users can force nvcc to produce position-independent executables by specifying -Xlinker -pie as an nvcc option.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Source code for Open64 and cuda-gdb
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+The Open64 and cuda-gdb source files are controlled under terms of the GPL license. 
+Current and previously released versions are located at:
+are located at  ftp://download.nvidia.com/CUDAOpen64
+
+Linux users:
+* Please refer to the “Release Notes” and “Known Issues” sections in the cuda-gdb 
+User Manual (cuda-gdb.pdf).
+* Please refer to cuda-memcheck.pdf for notes on supported error detection and known issues.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Revision History
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+  10/2011 - Version 4.1 RC1
+  09/2011 - Version 4.1 EA (Information in ReadMe.txt)
+  05/2011 - Version 4.0
+  04/2011 - Version 4.0 RC2 [Errata]
+  02/2011 - Version 4.0 RC
+  11/2010 - Version 3.2
+  10/2010 - Version 3.2 RC2
+  09/2010 - Version 3.2 RC
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+More Information
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+For more information and help with CUDA, please visit:
+http://www.nvidia.com/cuda
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Acknowledgements
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+NVIDIA extends thanks to Professor Mike Giles of Oxford University for providing the initial code for the optimized version of the device implementation of the double-precision erfinv() function found in this release of the CUDA toolkit.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=

@@ -1,0 +1,7 @@
+Reduction, Throughput = 4.2715 GB/s, Time = 0.01571 s, Size = 16777216 Elements, NumDevsUsed = 1, Workgroup = 256
+Reduction, Throughput = 2.3081 GB/s, Time = 0.02907 s, Size = 16777216 Elements, NumDevsUsed = 1, Workgroup = 256
+> CUBLAS         86.9822 GFlop/s, Time = 0.00904 s, Size = 786432000 Ops
+
+> CUBLAS         6.7170 GFlop/s, Time = 0.11708 s, Size = 786432000 Ops
+
+Reduction, Throughput = 0.2564 GB/s, Time = 0.26169 s, Size = 16777216 Elements, NumDevsUsed = 1, Workgroup = 256

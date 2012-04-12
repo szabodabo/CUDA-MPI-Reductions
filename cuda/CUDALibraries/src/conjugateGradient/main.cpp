@@ -1,0 +1,371 @@
+/*
+ * Copyright 1993-2010 NVIDIA Corporation.  All rights reserved.
+ *
+ * Please refer to the NVIDIA end user license agreement (EULA) associated
+ * with this source code for terms and conditions that govern your use of
+ * this software. Any use, reproduction, disclosure, or distribution of
+ * this software and related documentation outside the terms of the EULA
+ * is strictly prohibited.
+ *
+ */
+
+/*
+ * This sample implements a conjugate graident solver on GPU
+ * using CUBLAS and CUSPARSE
+ * 
+ */
+
+// includes, system
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+// Utilities and system includes
+#include <sdkHelper.h>  // helper for shared functions common to CUDA SDK samples
+#include <shrQATest.h>
+
+/* Using updated (v2) interfaces to cublas and cusparse */
+#include <cuda_runtime_api.h>
+#include <cusparse_v2.h>
+#include <cublas_v2.h>
+
+const char * sSDKname	  = "conjugateGradient";
+
+////////////////////////////////////////////////////////////////////////////////
+// These are CUDA Helper functions
+
+    // This will output the proper CUDA error strings in the event that a CUDA host call returns an error
+    #define checkCudaErrors(err)           __checkCudaErrors (err, __FILE__, __LINE__)
+
+    inline void __checkCudaErrors( cudaError err, const char *file, const int line )
+    {
+        if( cudaSuccess != err) {
+		    fprintf(stderr, "%s(%i) : CUDA Runtime API error %d: %s.\n",
+                    file, line, (int)err, cudaGetErrorString( err ) );
+            exit(-1);
+        }
+    }
+
+    // This will output the proper error string when calling cudaGetLastError
+    #define getLastCudaError(msg)      __getLastCudaError (msg, __FILE__, __LINE__)
+
+    inline void __getLastCudaError( const char *errorMessage, const char *file, const int line )
+    {
+        cudaError_t err = cudaGetLastError();
+        if( cudaSuccess != err) {
+            fprintf(stderr, "%s(%i) : getLastCudaError() CUDA error : %s : (%d) %s.\n",
+                    file, line, errorMessage, (int)err, cudaGetErrorString( err ) );
+            exit(-1);
+        }
+    }
+
+    // General GPU Device CUDA Initialization
+    int gpuDeviceInit(int devID)
+    {
+        int deviceCount;
+        checkCudaErrors(cudaGetDeviceCount(&deviceCount));
+        if (deviceCount == 0) {
+            fprintf(stderr, "gpuDeviceInit() CUDA error: no devices supporting CUDA.\n");
+            exit(-1);
+        }
+        if (devID < 0) 
+            devID = 0;
+        if (devID > deviceCount-1) {
+            fprintf(stderr, "\n");
+            fprintf(stderr, ">> %d CUDA capable GPU device(s) detected. <<\n", deviceCount);
+            fprintf(stderr, ">> gpuDeviceInit (-device=%d) is not a valid GPU device. <<\n", devID);
+            fprintf(stderr, "\n");
+            return -devID;
+        }
+
+        cudaDeviceProp deviceProp;
+        checkCudaErrors( cudaGetDeviceProperties(&deviceProp, devID) );
+        if (deviceProp.major < 1) {
+            fprintf(stderr, "gpuDeviceInit(): GPU device does not support CUDA.\n");
+            exit(-1);                                                  \
+        }
+
+        checkCudaErrors( cudaSetDevice(devID) );
+        printf("> gpuDeviceInit() CUDA device [%d]: %s\n", devID, deviceProp.name);
+        return devID;
+    }
+
+    // This function returns the best GPU (with maximum GFLOPS)
+    int gpuGetMaxGflopsDeviceId()
+    {
+	    int current_device   = 0, sm_per_multiproc = 0;
+	    int max_compute_perf = 0, max_perf_device  = 0;
+	    int device_count     = 0, best_SM_arch     = 0;
+	    cudaDeviceProp deviceProp;
+
+	    cudaGetDeviceCount( &device_count );
+	    // Find the best major SM Architecture GPU device
+	    while ( current_device < device_count ) {
+		    cudaGetDeviceProperties( &deviceProp, current_device );
+		    if (deviceProp.major > 0 && deviceProp.major < 9999) {
+			    best_SM_arch = MAX(best_SM_arch, deviceProp.major);
+		    }
+		    current_device++;
+	    }
+
+        // Find the best CUDA capable GPU device
+        current_device = 0;
+        while( current_device < device_count ) {
+           cudaGetDeviceProperties( &deviceProp, current_device );
+           if (deviceProp.major == 9999 && deviceProp.minor == 9999) {
+               sm_per_multiproc = 1;
+		   } else {
+               sm_per_multiproc = _ConvertSMVer2Cores(deviceProp.major, deviceProp.minor);
+           }
+
+           int compute_perf  = deviceProp.multiProcessorCount * sm_per_multiproc * deviceProp.clockRate;
+           if( compute_perf  > max_compute_perf ) {
+               // If we find GPU with SM major > 2, search only these
+               if ( best_SM_arch > 2 ) {
+                   // If our device==dest_SM_arch, choose this, or else pass
+                   if (deviceProp.major == best_SM_arch) {	
+                       max_compute_perf  = compute_perf;
+                       max_perf_device   = current_device;
+                   }
+               } else {
+                   max_compute_perf  = compute_perf;
+                   max_perf_device   = current_device;
+               }
+           }
+           ++current_device;
+	    }
+	    return max_perf_device;
+    }
+
+    // Initialization code to find the best CUDA Device
+    int findCudaDevice(int argc, const char **argv)
+    {
+        cudaDeviceProp deviceProp;
+        int devID = 0;
+        // If the command-line has a device number specified, use it
+        if (checkCmdLineFlag(argc, argv, "device")) {
+            devID = getCmdLineArgumentInt(argc, argv, "device=");
+            if (devID < 0) {
+                printf("Invalid command line parameters\n");
+                exit(-1);
+            } else {
+                devID = gpuDeviceInit(devID);
+                if (devID < 0) {
+                   printf("exiting...\n");
+                   shrQAFinishExit(argc, (const char **)argv, QA_FAILED);
+                   exit(-1);
+                }
+            }
+        } else {
+            // Otherwise pick the device with highest Gflops/s
+            devID = gpuGetMaxGflopsDeviceId();
+            checkCudaErrors( cudaSetDevice( devID ) );
+            checkCudaErrors( cudaGetDeviceProperties(&deviceProp, devID) );
+            printf("> Using CUDA device [%d]: %s\n", devID, deviceProp.name);
+        }
+        return devID;
+    }
+// end of CUDA Helper Functions
+
+/* checkCublasStatus: concise method for verifying cublas return status */
+int checkCublasStatus ( cublasStatus_t status, const char *msg ) 
+{
+    if ( status != CUBLAS_STATUS_SUCCESS ) {
+        fprintf (stderr, "!!!! CUBLAS %s ERROR \n", msg);
+        return 1;
+    }
+    return 0;
+}
+
+/* checkCusparseStatus: concise method for verifying cusparse return status */
+int checkCusparseStatus ( cusparseStatus_t status, const char *msg )
+{
+    if ( status != CUSPARSE_STATUS_SUCCESS ) {
+        fprintf (stderr, "!!!! CUSPARSE %s ERROR \n", msg);
+        return 1;
+    }
+    return 0;
+}
+
+
+/* genTridiag: generate a random tridiagonal symmetric matrix */
+void genTridiag(int *I, int *J, float *val, int N, int nz)
+{
+    I[0] = 0, J[0] = 0, J[1] = 1;
+    val[0] = (float)rand()/RAND_MAX + 10.0f;
+    val[1] = (float)rand()/RAND_MAX;
+    int start;
+    for (int i = 1; i < N; i++) {
+        if (i > 1) 
+            I[i] = I[i-1]+3;
+        else 
+            I[1] = 2;
+        start = (i-1)*3 + 2;
+        J[start] = i - 1;
+        J[start+1] = i;
+        if (i < N-1) 
+            J[start+2] = i + 1;
+        val[start] = val[start-1];
+        val[start+1] = (float)rand()/RAND_MAX + 10.0f;
+        if (i < N-1) 
+            val[start+2] = (float)rand()/RAND_MAX;
+    }
+    I[N] = nz;
+}
+
+int main(int argc, char **argv)
+{
+    int M = 0, N = 0, nz = 0, *I = NULL, *J = NULL;
+    float *val = NULL;
+    const float tol = 1e-5f;   
+    const int max_iter = 10000;
+    float *x; 
+    float *rhs; 
+    float a, b, na, r0, r1;
+    int *d_col, *d_row;
+    float *d_val, *d_x, dot;
+    float *d_r, *d_p, *d_Ax;
+    int k;
+    float alpha, beta, alpham1;
+
+    shrQAStart(argc, argv);
+
+    // This will pick the best possible CUDA capable device
+    cudaDeviceProp deviceProp;
+    int devID = findCudaDevice(argc, (const char **)argv);
+    if (devID < 0) {
+       printf("exiting...\n");
+       shrQAFinishExit(argc, (const char **)argv, QA_PASSED);
+       exit(0);
+    }
+    checkCudaErrors( cudaGetDeviceProperties(&deviceProp, devID) );
+
+    // Statistics about the GPU device
+    printf("> GPU device has %d Multi-Processors, SM %d.%d compute capabilities\n\n", 
+           deviceProp.multiProcessorCount, deviceProp.major, deviceProp.minor);
+
+    int version = (deviceProp.major * 0x10 + deviceProp.minor);
+    if(version < 0x11) 
+    {
+        printf("%s: requires a minimum CUDA compute 1.1 capability\n", sSDKname);
+        cudaDeviceReset();
+        shrQAFinishExit(argc, (const char **)argv, QA_PASSED);
+    }
+
+    /* Generate a random tridiagonal symmetric matrix in CSR format */
+    M = N = 1048576;
+    nz = (N-2)*3 + 4;
+    I = (int*)malloc(sizeof(int)*(N+1));
+    J = (int*)malloc(sizeof(int)*nz);
+    val = (float*)malloc(sizeof(float)*nz);
+    genTridiag(I, J, val, N, nz);
+
+    x = (float*)malloc(sizeof(float)*N);
+    rhs = (float*)malloc(sizeof(float)*N);
+
+    for (int i = 0; i < N; i++) {
+        rhs[i] = 1.0;
+        x[i] = 0.0;
+    }
+
+    /* Get handle to the CUBLAS context */
+    cublasHandle_t cublasHandle = 0;
+    cublasStatus_t cublasStatus;
+    cublasStatus = cublasCreate(&cublasHandle);
+    if ( checkCublasStatus (cublasStatus, "!!!! CUBLAS initialization error\n") ) return EXIT_FAILURE;
+
+    /* Get handle to the CUSPARSE context */
+    cusparseHandle_t cusparseHandle = 0;
+    cusparseStatus_t cusparseStatus;
+    cusparseStatus = cusparseCreate(&cusparseHandle);
+    if ( checkCusparseStatus (cusparseStatus, "!!!! CUSPARSE initialization error\n") ) return EXIT_FAILURE;
+
+    cusparseMatDescr_t descr = 0;
+    cusparseStatus = cusparseCreateMatDescr(&descr); 
+    if ( checkCusparseStatus (cusparseStatus, "!!!! CUSPARSE cusparseCreateMatDescr error\n") ) return EXIT_FAILURE;
+
+    cusparseSetMatType(descr,CUSPARSE_MATRIX_TYPE_GENERAL);
+    cusparseSetMatIndexBase(descr,CUSPARSE_INDEX_BASE_ZERO);
+    
+    checkCudaErrors( cudaMalloc((void**)&d_col, nz*sizeof(int)) );
+    checkCudaErrors( cudaMalloc((void**)&d_row, (N+1)*sizeof(int)) );
+    checkCudaErrors( cudaMalloc((void**)&d_val, nz*sizeof(float)) );
+    checkCudaErrors( cudaMalloc((void**)&d_x, N*sizeof(float)) );  
+    checkCudaErrors( cudaMalloc((void**)&d_r, N*sizeof(float)) );
+    checkCudaErrors( cudaMalloc((void**)&d_p, N*sizeof(float)) );
+    checkCudaErrors( cudaMalloc((void**)&d_Ax, N*sizeof(float)) );
+
+    cudaMemcpy(d_col, J, nz*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_row, I, (N+1)*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_val, val, nz*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_x, x, N*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_r, rhs, N*sizeof(float), cudaMemcpyHostToDevice);
+
+    alpha = 1.0;
+    alpham1 = -1.0;
+    beta = 0.0;
+    r0 = 0.;
+
+    cusparseScsrmv(cusparseHandle,CUSPARSE_OPERATION_NON_TRANSPOSE, N, N, nz, &alpha, descr, d_val, d_row, d_col, d_x, &beta, d_Ax);
+
+    cublasSaxpy(cublasHandle, N, &alpham1, d_Ax, 1, d_r, 1);
+    cublasStatus = cublasSdot(cublasHandle, N, d_r, 1, d_r, 1, &r1);
+
+    k = 1;
+    while (r1 > tol*tol && k <= max_iter) {
+        if (k > 1) {
+            b = r1 / r0;
+            cublasStatus = cublasSscal(cublasHandle, N, &b, d_p, 1);
+            cublasStatus = cublasSaxpy(cublasHandle, N, &alpha, d_r, 1, d_p, 1);
+        } else {
+	    cublasStatus = cublasScopy(cublasHandle, N, d_r, 1, d_p, 1);
+        }
+
+        cusparseScsrmv(cusparseHandle, CUSPARSE_OPERATION_NON_TRANSPOSE, N, N, nz, &alpha, descr, d_val, d_row, d_col, d_p, &beta, d_Ax);
+        cublasStatus = cublasSdot(cublasHandle, N, d_p, 1, d_Ax, 1, &dot);
+	a = r1 / dot;
+
+        cublasStatus = cublasSaxpy(cublasHandle, N, &a, d_p, 1, d_x, 1);
+	na = -a;
+        cublasStatus = cublasSaxpy(cublasHandle, N, &na, d_Ax, 1, d_r, 1);
+
+        r0 = r1;
+        cublasStatus = cublasSdot(cublasHandle, N, d_r, 1, d_r, 1, &r1);
+        cudaThreadSynchronize();
+        printf("iteration = %3d, residual = %e\n", k, sqrt(r1));
+        k++;
+    }
+
+    cudaMemcpy(x, d_x, N*sizeof(float), cudaMemcpyDeviceToHost);
+
+    float rsum, diff, err = 0.0;
+    for (int i = 0; i < N; i++) {
+        rsum = 0.0;
+        for (int j = I[i]; j < I[i+1]; j++) {
+            rsum += val[j]*x[J[j]];
+        }
+        diff = fabs(rsum - rhs[i]);
+        if (diff > err) err = diff;
+    }
+
+    cusparseDestroy(cusparseHandle);
+    cublasDestroy(cublasHandle);
+    
+    free(I);
+    free(J);
+    free(val);
+    free(x);
+    free(rhs);
+    cudaFree(d_col);
+    cudaFree(d_row);
+    cudaFree(d_val);
+    cudaFree(d_x);
+    cudaFree(d_r);
+    cudaFree(d_p);
+    cudaFree(d_Ax);
+
+    cudaDeviceReset();
+
+    printf("Test Summary:  Error amount = %f\n", err);
+    shrQAFinishExit(argc, (const char **)argv, (k <= max_iter) ? QA_PASSED : QA_FAILED );
+}

@@ -1,0 +1,155 @@
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+NVIDIA GPU Computing Software Development Kit
+DirectCompute SDK 4.1 Release Notes
+R285 Driver Release
+
+  Windows Windows Vista, and Windows 7 (32/64-bit)
+  Windows Server 2008, 2008 R2
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+Please, also refer to the release notes of the Microsoft DirectX SDK from
+June 2010 or Newer
+
+--------------------------------------------------------------------------------
+TABLE OF CONTENTS
+--------------------------------------------------------------------------------
+I.   Installation Instructions
+II.  Creating Your Own DirectCompute SDK samples
+III. Known Issues
+IV.  Frequently Asked Questions
+V.   Change Log
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+I.  Installation Instructions
+--------------------------------------------------------------------------------
+	0. The DirectCompute SDK requires version 285 or newer of the NVIDIA 
+	   Windows Vista/win7 Display Driver. 
+	   
+	   Please make sure to read the Driver Installation Hints Document before you 
+	   install the driver:
+	   http://www.nvidia.com/object/driver_installation_hints.html
+
+       To download the NVIDIA Drivers refer to this link
+       
+       http://www.nvidia.com/page/pg_20030521269172.html
+       
+        1. Install the Microsoft DirectX SDK from June 2010 or newer.  
+		   This Microsoft website includes a links to the latest DirectX SDK.
+       
+       http://msdn.microsoft.com/en-us/directx/default.aspx
+       	   	
+	2. Install Version 4.0 Release of the NVIDIA GPU Computing SDK by running
+	   gpucomputingsdk_4.0_Win_[32|64].exe corresponding to your operating
+	   system.
+
+	3. Build the 32-bit and/or 64-bit, release, debug configurations of the SDK project.
+	   Solution example files for Microsoft Visual Studio 2005 can be built with *_2005.sln
+	   Microsoft Visual Studio 2008 examples can be built with the *_2008.sln solution files.
+	   
+	   You can:
+		  - either use the individual solution files located in each of the examples'
+			directories in "NVIDIA GPU Computing SDK 4.0\DirectCompute\src",
+		  - or use the global solution files Release_2005.sln or Release_2008.sln located
+			in "NVIDIA GPU Computing SDK 4.0\DirectCompute".
+	   
+	   Notes:
+	   
+		  - All of the DirectCompute examples require the DirectX SDK installed 
+		    and the VC++ directory paths (located in Tools->Options...) properly setup.
+	      
+	4. Run the examples from the release or debug directories 
+	   located in "NVIDIA GPU Computing SDK 4.0\DirectCompute\bin\win[32|64]\[release|debug]".
+	   
+	   Notes:
+	   
+		- The release and debug configurations require a CUDA-capable GPU to run
+		  properly (see Appendix A.1 of the CUDA Programming Guide for a complete
+		  list of CUDA-capable GPUs).
+	      
+--------------------------------------------------------------------------------
+II. Creating Your Own DirectCompute
+--------------------------------------------------------------------------------
+
+    Currently there is no template for a DirectCompute project, but NVIDIA will be
+    providing one soon.
+
+--------------------------------------------------------------------------------
+III. Known Issues on DirectCompute SDK
+--------------------------------------------------------------------------------
+
+    DirectCompute SDK samples do not run on Windows XP, Windows 2003 Server, or Windows 2003 R2 Server.
+
+    - DirectCompute SDK samples are not supported on Windows XP, Windows 2003 Server, or
+      Windows 2003 R2 Server.  This is a known limitation for DirectCompute.  
+      Only the following Microsoft OS support DirectCompute
+      * Windows Vista, Windows 7
+      * Windows 2008 Server, and Windows 2008 R2 Server
+  
+--------------------------------------------------------------------------------
+IV. Frequently Asked Questions
+--------------------------------------------------------------------------------
+
+The Official CUDA FAQ is available online on the NVIDIA CUDA Forums:
+http://forums.nvidia.com/index.php?showtopic=84440
+
+Note: Please also see the CUDA Toolkit release notes for additional Frequently 
+Asked Questions.  
+
+--------------------------------------------------------------------------------
+V.  Change Log
+--------------------------------------------------------------------------------
+
+Note: Unless noted specifically noted, the Release Logs are for all OS's.
+
+Release 4.1 (R285 Driver Update)
+* No Changes 
+
+Release 4.0 (R270 Driver Update)
+* No Changes 
+
+Release 3.2 Release (R260 Release Driver Update)
+* No Changes
+
+Release 3.2 Beta (R260 Beta Driver Update)
+* No Changes
+
+Release 3.1 Final
+* No Changes
+
+Release 3.1 Beta  (R256 Beta Driver Update)
+* DXUT is built against the August 2009 SDK.  Anything newer is supported.
+
+Release 3.0 Final (R195 Final Driver Update)
+* No new sample changes
+
+Release 2.3 (R190 Driver Update)
+* New DirectCompute Samples (Windows only)
+  - ImageProcessingCS   - sample that demonstrates a simple method to apply DirectCompute post processing to a Direct3D rendered image.
+  - nBodyCS             - efficient all-pairs simulation of a gravitational n-body simulation in DirectCompute.
+  - OceanCS             - sample that simulates an Ocean height field using DirectCompute FFT and renders the result using Direct3D10.
+  - SimpleParticlesCS   - sample that to simulates and visualizes a large set of particles and their physical interaction.
+
+--------------------------------------------------------------------------------
+VII. OS Platforms Supported
+--------------------------------------------------------------------------------
+
+OS Platform Supported from CUDA 3.1
+	* Vista 32 & 64bit
+		  o Visual Studio 8 (2005)
+		  o Visual Studio 9 (2008) 
+	* Win7 32 & 64-bit
+		  o Visual Studio 8 (2005)
+		  o Visual Studio 9 (2008) 
+	* Windows Server 2008 and 2008 R2
+		  o Visual Studio 8 (2005)
+		  o Visual Studio 9 (2008) 
+
+OS Platform Supported from CUDA 3.2
+	* Vista 32 & 64bit
+	* Win7 32 & 64-bit
+	* Windows Server 2008, Windows Server 2008 R2
+
