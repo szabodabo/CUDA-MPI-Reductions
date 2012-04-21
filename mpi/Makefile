@@ -1,5 +1,11 @@
-COMPILER = mpicc
-OPTS = -Wall -g -I.
+BG_COMPILER = mpixlc -I.
+KR_COMPILER = mpicc -Wall -g -I.
 
-all:
-	$(COMPILER) $(OPTS) reduce.c -o reduce
+bluegene: clean
+	$(BG_COMPILER) reduce.c -o reduce
+kratos: 
+	$(KR_COMPILER) reduce.c -o reduce
+clean:
+	rm -f stdout*
+	rm -f stderr*
+	rm -f core.*

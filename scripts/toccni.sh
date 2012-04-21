@@ -1,3 +1,3 @@
 #!/bin/bash
 
-scp ../mpi/* PCP2szab@lp03.ccni.rpi.edu:assignment5/
+scp -r ../mpi/* PCP2szab@lp03.ccni.rpi.edu:assignment5/

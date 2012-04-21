@@ -7,7 +7,6 @@ cuda/CUDALibraries/doc
 cuda/CUDALibraries/releaseNotesData
 cuda/CUDALibraries/data
 cuda/DirectCompute
-cuda/OpenCL
 cuda/doc
 cuda/Documentation.html
 cuda/License.txt
