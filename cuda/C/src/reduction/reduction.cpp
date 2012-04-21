@@ -225,6 +225,34 @@ T sumreduceCPU(T *data, int size)
     }
     return sum;
 }
+template<class T>
+T minreduceCPU(T *data, int size)
+{
+    T sum = data[0];
+    T c = (T)0.0;              
+    for (int i = 1; i < size; i++)
+    {
+        T y = data[i] - c;  
+        T t = sum + y;      
+        c = (t - sum) - y;  
+        sum = t;            
+    }
+    return sum;
+}
+template<class T>
+T maxreduceCPU(T *data, int size)
+{
+    T sum = data[0];
+    T c = (T)0.0;              
+    for (int i = 1; i < size; i++)
+    {
+        T y = data[i] - c;  
+        T t = sum + y;      
+        c = (t - sum) - y;  
+        sum = t;            
+    }
+    return sum;
+}
 
 unsigned int nextPow2( unsigned int x ) {
     --x;
@@ -829,7 +857,7 @@ runTestMin( int argc, char** argv, ReduceType datatype)
         cutilSafeCallNoSync( cudaMemcpy(d_odata, h_idata, numBlocks*sizeof(T), cudaMemcpyHostToDevice) );
 
         // warm-up
-        sumreduce<T>(size, numThreads, numBlocks, whichKernel, d_idata, d_odata);
+        minreduce<T>(size, numThreads, numBlocks, whichKernel, d_idata, d_odata);
         
         int testIterations = 100;
 
@@ -848,7 +876,7 @@ runTestMin( int argc, char** argv, ReduceType datatype)
                1.0e-9 * ((double)bytes)/reduceTime, reduceTime, size, 1, numThreads);
 
         // compute reference solution
-        T cpu_result = sumreduceCPU<T>(h_idata, size);
+        T cpu_result = minreduceCPU<T>(h_idata, size);
 
         double threshold = 1e-12;
         double diff = 0;
@@ -955,7 +983,7 @@ runTestMax( int argc, char** argv, ReduceType datatype)
         cutilSafeCallNoSync( cudaMemcpy(d_odata, h_idata, numBlocks*sizeof(T), cudaMemcpyHostToDevice) );
 
         // warm-up
-        sumreduce<T>(size, numThreads, numBlocks, whichKernel, d_idata, d_odata);
+        maxreduce<T>(size, numThreads, numBlocks, whichKernel, d_idata, d_odata);
         
         int testIterations = 100;
 
@@ -974,7 +1002,7 @@ runTestMax( int argc, char** argv, ReduceType datatype)
                1.0e-9 * ((double)bytes)/reduceTime, reduceTime, size, 1, numThreads);
 
         // compute reference solution
-        T cpu_result = sumreduceCPU<T>(h_idata, size);
+        T cpu_result = maxreduceCPU<T>(h_idata, size);
 
         double threshold = 1e-12;
         double diff = 0;
