@@ -13,7 +13,16 @@
 #define __REDUCTION_H__
 
 template <class T>
-void reduce(int size, int threads, int blocks, 
+void sumreduce(int size, int threads, int blocks, 
                  int whichKernel, T *d_idata, T *d_odata);
+
+template <class T>
+void minreduce(int size, int threads, int blocks, 
+                 int whichKernel, T *d_idata, T *d_odata);
+
+template <class T>
+void maxreduce(int size, int threads, int blocks, 
+                 int whichKernel, T *d_idata, T *d_odata);
+
 
 #endif

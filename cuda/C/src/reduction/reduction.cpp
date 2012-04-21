@@ -59,7 +59,11 @@ enum ReduceType
 ////////////////////////////////////////////////////////////////////////////////
 // declaration, forward
 template <class T>
-bool runTest( int argc, char** argv, ReduceType datatype);
+bool runTestSum( int argc, char** argv, ReduceType datatype);
+template <class T>
+bool runTestMin( int argc, char** argv, ReduceType datatype);
+template <class T>
+bool runTestMax( int argc, char** argv, ReduceType datatype);
 
 #define MAX_BLOCK_DIM_SIZE 65535
 
@@ -82,6 +86,9 @@ main( int argc, char** argv)
 {
     shrQAStart( argc, argv );
     shrSetLogFileName ("reduction.txt");
+
+		char *reduceMethod;
+    cutGetCmdLineArgumentstr( argc, (const char**) argv, "method", &reduceMethod);
     
     char *typeChoice;
     cutGetCmdLineArgumentstr( argc, (const char**) argv, "type", &typeChoice);
@@ -113,6 +120,12 @@ main( int argc, char** argv)
     }
 
     int dev;
+
+		if(!cutCheckCmdLineFlag(argc, (const char**)argv, "method") )
+		{
+				fprintf(stderr, "MISSING --method FLAG.\nYou must provide --method={ SUM | MIN | MAX }.\n");
+				exit(1);
+		}
 
     if( cutCheckCmdLineFlag(argc, (const char**)argv, "device") ) 
     {
@@ -149,13 +162,40 @@ main( int argc, char** argv)
     {
     default:
     case REDUCE_INT:
-        bResult = runTest<int>( argc, argv, datatype);
+				if (strcmp("SUM", reduceMethod) == 0) {
+					bResult = runTestSum<int>( argc, argv, datatype);
+				} else if ( strcmp("MAX", reduceMethod) == 0 ) {
+					bResult = runTestMax<int>( argc, argv, datatype);
+				} else if ( strcmp("MIN", reduceMethod) == 0 ) {
+					bResult = runTestMin<int>( argc, argv, datatype);
+				} else {
+					fprintf(stderr, "No --method specified!\n");
+					exit(1);
+				}
         break;
     case REDUCE_FLOAT:
-        bResult = runTest<float>( argc, argv, datatype);
+				if (strcmp("SUM", reduceMethod) == 0) {
+					bResult = runTestSum<float>( argc, argv, datatype);
+				} else if ( strcmp("MAX", reduceMethod) == 0 ) {
+					bResult = runTestMax<float>( argc, argv, datatype);
+				} else if ( strcmp("MIN", reduceMethod) == 0 ) {
+					bResult = runTestMin<float>( argc, argv, datatype);
+				} else {
+					fprintf(stderr, "No --method specified!\n");
+					exit(1);
+				}
         break;
     case REDUCE_DOUBLE:
-        bResult = runTest<double>( argc, argv, datatype);
+				if (strcmp("SUM", reduceMethod) == 0) {
+					bResult = runTestSum<double>( argc, argv, datatype);
+				} else if ( strcmp("MAX", reduceMethod) == 0 ) {
+					bResult = runTestMax<double>( argc, argv, datatype);
+				} else if ( strcmp("MIN", reduceMethod) == 0 ) {
+					bResult = runTestMin<double>( argc, argv, datatype);
+				} else {
+					fprintf(stderr, "No --method specified!\n");
+					exit(1);
+				}
         break;
     }
     
@@ -172,7 +212,7 @@ main( int argc, char** argv)
 //! @param size       number of input data elements
 ////////////////////////////////////////////////////////////////////////////////
 template<class T>
-T reduceCPU(T *data, int size)
+T sumreduceCPU(T *data, int size)
 {
     T sum = data[0];
     T c = (T)0.0;              
@@ -233,7 +273,7 @@ void getNumBlocksAndThreads(int whichKernel, int n, int maxBlocks, int maxThread
 // measures the average reduction time.
 ////////////////////////////////////////////////////////////////////////////////
 template <class T>
-T benchmarkReduce(int  n, 
+T benchmarkReduceSum(int  n, 
                   int  numThreads,
                   int  numBlocks,
                   int  maxThreads,
@@ -258,7 +298,7 @@ T benchmarkReduce(int  n,
         cutilCheckError( cutStartTimer( timer));
 
         // execute the kernel
-        reduce<T>(n, numThreads, numBlocks, whichKernel, d_idata, d_odata);
+        sumreduce<T>(n, numThreads, numBlocks, whichKernel, d_idata, d_odata);
 
         // check if kernel execution generated an error
         cutilCheckMsg("Kernel execution failed");
@@ -286,7 +326,191 @@ T benchmarkReduce(int  n,
                 int threads = 0, blocks = 0;
                 getNumBlocksAndThreads(kernel, s, maxBlocks, maxThreads, blocks, threads);
                 
-                reduce<T>(s, threads, blocks, kernel, d_odata, d_odata);
+                sumreduce<T>(s, threads, blocks, kernel, d_odata, d_odata);
+                
+                if (kernel < 3)
+                    s = (s + threads - 1) / threads;
+                else
+                    s = (s + (threads*2-1)) / (threads*2);
+            }
+            
+            if (s > 1)
+            {
+                // copy result from device to host
+                cutilSafeCallNoSync( cudaMemcpy( h_odata, d_odata, s * sizeof(T), cudaMemcpyDeviceToHost) );
+
+                for(int i=0; i < s; i++) 
+                {
+                    gpu_result += h_odata[i];
+                }
+
+                needReadBack = false;
+            }
+        }
+
+        cutilDeviceSynchronize();
+        cutilCheckError( cutStopTimer(timer) );      
+    }
+
+    if (needReadBack)
+    {
+        // copy final sum from device to host
+        cutilSafeCallNoSync( cudaMemcpy( &gpu_result, d_odata, sizeof(T), cudaMemcpyDeviceToHost) );
+    }
+
+    return gpu_result;
+}
+////////////////////////////////////////////////////////////////////////////////
+// This function performs a reduction of the input data multiple times and 
+// measures the average reduction time.
+////////////////////////////////////////////////////////////////////////////////
+template <class T>
+T benchmarkReduceMin(int  n, 
+                  int  numThreads,
+                  int  numBlocks,
+                  int  maxThreads,
+                  int  maxBlocks,
+                  int  whichKernel, 
+                  int  testIterations,
+                  bool cpuFinalReduction,
+                  int  cpuFinalThreshold,
+                  unsigned int timer,
+                  T* h_odata,
+                  T* d_idata, 
+                  T* d_odata)
+{
+    T gpu_result = 0;
+    bool needReadBack = true;
+
+    for (int i = 0; i < testIterations; ++i)
+    {
+        gpu_result = 0;
+
+        cutilDeviceSynchronize();
+        cutilCheckError( cutStartTimer( timer));
+
+        // execute the kernel
+        sumreduce<T>(n, numThreads, numBlocks, whichKernel, d_idata, d_odata);
+
+        // check if kernel execution generated an error
+        cutilCheckMsg("Kernel execution failed");
+
+        if (cpuFinalReduction)
+        {
+            // sum partial sums from each block on CPU        
+            // copy result from device to host
+            cutilSafeCallNoSync( cudaMemcpy( h_odata, d_odata, numBlocks*sizeof(T), cudaMemcpyDeviceToHost) );
+
+            for(int i=0; i<numBlocks; i++) 
+            {
+                gpu_result += h_odata[i];
+            }
+
+            needReadBack = false;
+        }
+        else
+        {
+            // sum partial block sums on GPU
+            int s=numBlocks;
+            int kernel = whichKernel;
+            while(s > cpuFinalThreshold) 
+            {
+                int threads = 0, blocks = 0;
+                getNumBlocksAndThreads(kernel, s, maxBlocks, maxThreads, blocks, threads);
+                
+                sumreduce<T>(s, threads, blocks, kernel, d_odata, d_odata);
+                
+                if (kernel < 3)
+                    s = (s + threads - 1) / threads;
+                else
+                    s = (s + (threads*2-1)) / (threads*2);
+            }
+            
+            if (s > 1)
+            {
+                // copy result from device to host
+                cutilSafeCallNoSync( cudaMemcpy( h_odata, d_odata, s * sizeof(T), cudaMemcpyDeviceToHost) );
+
+                for(int i=0; i < s; i++) 
+                {
+                    gpu_result += h_odata[i];
+                }
+
+                needReadBack = false;
+            }
+        }
+
+        cutilDeviceSynchronize();
+        cutilCheckError( cutStopTimer(timer) );      
+    }
+
+    if (needReadBack)
+    {
+        // copy final sum from device to host
+        cutilSafeCallNoSync( cudaMemcpy( &gpu_result, d_odata, sizeof(T), cudaMemcpyDeviceToHost) );
+    }
+
+    return gpu_result;
+}
+////////////////////////////////////////////////////////////////////////////////
+// This function performs a reduction of the input data multiple times and 
+// measures the average reduction time.
+////////////////////////////////////////////////////////////////////////////////
+template <class T>
+T benchmarkReduceMax(int  n, 
+                  int  numThreads,
+                  int  numBlocks,
+                  int  maxThreads,
+                  int  maxBlocks,
+                  int  whichKernel, 
+                  int  testIterations,
+                  bool cpuFinalReduction,
+                  int  cpuFinalThreshold,
+                  unsigned int timer,
+                  T* h_odata,
+                  T* d_idata, 
+                  T* d_odata)
+{
+    T gpu_result = 0;
+    bool needReadBack = true;
+
+    for (int i = 0; i < testIterations; ++i)
+    {
+        gpu_result = 0;
+
+        cutilDeviceSynchronize();
+        cutilCheckError( cutStartTimer( timer));
+
+        // execute the kernel
+        sumreduce<T>(n, numThreads, numBlocks, whichKernel, d_idata, d_odata);
+
+        // check if kernel execution generated an error
+        cutilCheckMsg("Kernel execution failed");
+
+        if (cpuFinalReduction)
+        {
+            // sum partial sums from each block on CPU        
+            // copy result from device to host
+            cutilSafeCallNoSync( cudaMemcpy( h_odata, d_odata, numBlocks*sizeof(T), cudaMemcpyDeviceToHost) );
+
+            for(int i=0; i<numBlocks; i++) 
+            {
+                gpu_result += h_odata[i];
+            }
+
+            needReadBack = false;
+        }
+        else
+        {
+            // sum partial block sums on GPU
+            int s=numBlocks;
+            int kernel = whichKernel;
+            while(s > cpuFinalThreshold) 
+            {
+                int threads = 0, blocks = 0;
+                getNumBlocksAndThreads(kernel, s, maxBlocks, maxThreads, blocks, threads);
+                
+                sumreduce<T>(s, threads, blocks, kernel, d_odata, d_odata);
                 
                 if (kernel < 3)
                     s = (s + threads - 1) / threads;
@@ -330,6 +554,8 @@ T benchmarkReduce(int  n,
 template <class T>
 void shmoo(int minN, int maxN, int maxThreads, int maxBlocks, ReduceType datatype)
 { 
+		fprintf(stderr, "Shmoo wasn't implemented in this modified kernel!\n");
+		exit(1);
     // create random input data on CPU
     unsigned int bytes = maxN * sizeof(T);
 
@@ -362,7 +588,7 @@ void shmoo(int minN, int maxN, int maxThreads, int maxBlocks, ReduceType datatyp
     // warm-up
     for (int kernel = 0; kernel < 7; kernel++)
     {
-        reduce<T>(maxN, maxThreads, maxNumBlocks, kernel, d_idata, d_odata);
+        sumreduce<T>(maxN, maxThreads, maxNumBlocks, kernel, d_idata, d_odata);
     }
     int testIterations = 100;
 
@@ -389,7 +615,7 @@ void shmoo(int minN, int maxN, int maxThreads, int maxBlocks, ReduceType datatyp
             
             float reduceTime;
             if( numBlocks <= MAX_BLOCK_DIM_SIZE ) {
-                benchmarkReduce(i, numThreads, numBlocks, maxThreads, maxBlocks, kernel, 
+                benchmarkReduceSum(i, numThreads, numBlocks, maxThreads, maxBlocks, kernel, 
                                 testIterations, false, 1, timer, h_odata, d_idata, d_odata);
                 reduceTime =  cutGetAverageTimerValue(timer);
             } else {                
@@ -407,13 +633,12 @@ void shmoo(int minN, int maxN, int maxThreads, int maxBlocks, ReduceType datatyp
     cutilSafeCallNoSync(cudaFree(d_idata));
     cutilSafeCallNoSync(cudaFree(d_odata));    
 }
-
-////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
 // The main function whihc runs the reduction test.
 ////////////////////////////////////////////////////////////////////////////////
 template <class T>
 bool
-runTest( int argc, char** argv, ReduceType datatype) 
+runTestSum( int argc, char** argv, ReduceType datatype) 
 {
     int size = 1<<24;    // number of elements to reduce
     int maxThreads = 256;  // number of threads per block
@@ -427,6 +652,7 @@ runTest( int argc, char** argv, ReduceType datatype)
     cutGetCmdLineArgumenti( argc, (const char**) argv, "kernel", &whichKernel);
     cutGetCmdLineArgumenti( argc, (const char**) argv, "maxblocks", &maxBlocks);
     
+		shrLog("METHOD: SUM\n");
     shrLog("%d elements\n", size);
     shrLog("%d threads (max)\n", maxThreads);
 
@@ -478,7 +704,7 @@ runTest( int argc, char** argv, ReduceType datatype)
         cutilSafeCallNoSync( cudaMemcpy(d_odata, h_idata, numBlocks*sizeof(T), cudaMemcpyHostToDevice) );
 
         // warm-up
-        reduce<T>(size, numThreads, numBlocks, whichKernel, d_idata, d_odata);
+        sumreduce<T>(size, numThreads, numBlocks, whichKernel, d_idata, d_odata);
         
         int testIterations = 100;
 
@@ -487,7 +713,7 @@ runTest( int argc, char** argv, ReduceType datatype)
         
         T gpu_result = 0;
 
-        gpu_result = benchmarkReduce<T>(size, numThreads, numBlocks, maxThreads, maxBlocks,
+        gpu_result = benchmarkReduceSum<T>(size, numThreads, numBlocks, maxThreads, maxBlocks,
                                         whichKernel, testIterations, cpuFinalReduction, 
                                         cpuFinalThreshold, timer,
                                         h_odata, d_idata, d_odata);
@@ -497,7 +723,258 @@ runTest( int argc, char** argv, ReduceType datatype)
                1.0e-9 * ((double)bytes)/reduceTime, reduceTime, size, 1, numThreads);
 
         // compute reference solution
-        T cpu_result = reduceCPU<T>(h_idata, size);
+        T cpu_result = sumreduceCPU<T>(h_idata, size);
+
+        double threshold = 1e-12;
+        double diff = 0;
+		
+        if (datatype == REDUCE_INT)
+        {
+            shrLog("\nGPU result = %d\n", gpu_result);
+            shrLog("CPU result = %d\n\n", cpu_result);
+        }
+        else
+        {
+            shrLog("\nGPU result = %f\n", gpu_result);
+            shrLog("CPU result = %f\n\n", cpu_result);
+
+            if (datatype == REDUCE_FLOAT)
+                threshold = 1e-8 * size;
+            diff = fabs((double)gpu_result - (double)cpu_result);
+        }
+
+        // cleanup
+        cutilCheckError( cutDeleteTimer(timer) );
+        free(h_idata);
+        free(h_odata);
+
+        cutilSafeCallNoSync(cudaFree(d_idata));
+        cutilSafeCallNoSync(cudaFree(d_odata));
+
+		if (datatype == REDUCE_INT) {
+			return (gpu_result == cpu_result);
+		} else {
+			return (diff < threshold);
+		}
+	}
+	return true;
+}///////////////////////////////////////////////////////////////////////////////
+// The main function whihc runs the reduction test.
+////////////////////////////////////////////////////////////////////////////////
+template <class T>
+bool
+runTestMin( int argc, char** argv, ReduceType datatype) 
+{
+    int size = 1<<24;    // number of elements to reduce
+    int maxThreads = 256;  // number of threads per block
+    int whichKernel = 6;
+    int maxBlocks = 64;
+    bool cpuFinalReduction = false;
+    int cpuFinalThreshold = 1;
+
+    cutGetCmdLineArgumenti( argc, (const char**) argv, "n", &size);
+    cutGetCmdLineArgumenti( argc, (const char**) argv, "threads", &maxThreads);
+    cutGetCmdLineArgumenti( argc, (const char**) argv, "kernel", &whichKernel);
+    cutGetCmdLineArgumenti( argc, (const char**) argv, "maxblocks", &maxBlocks);
+    
+		shrLog("METHOD: MIN\n");
+    shrLog("%d elements\n", size);
+    shrLog("%d threads (max)\n", maxThreads);
+
+    cpuFinalReduction = (cutCheckCmdLineFlag( argc, (const char**) argv, "cpufinal") == CUTTrue);
+    cutGetCmdLineArgumenti( argc, (const char**) argv, "cputhresh", &cpuFinalThreshold);
+
+    bool runShmoo = (cutCheckCmdLineFlag(argc, (const char**) argv, "shmoo") == CUTTrue);
+
+    if (runShmoo)
+    {
+        shmoo<T>(1, 33554432, maxThreads, maxBlocks, datatype);
+    }
+    else
+    {
+
+        // create random input data on CPU
+        unsigned int bytes = size * sizeof(T);
+
+        T *h_idata = (T *) malloc(bytes);
+
+        for(int i=0; i<size; i++) 
+        {
+            // Keep the numbers small so we don't get truncation error in the sum
+            if (datatype == REDUCE_INT)
+                h_idata[i] = (T)(rand() & 0xFF);
+            else
+                h_idata[i] = (rand() & 0xFF) / (T)RAND_MAX;
+        }
+
+        int numBlocks = 0;
+        int numThreads = 0;
+        getNumBlocksAndThreads(whichKernel, size, maxBlocks, maxThreads, numBlocks, numThreads);
+        if (numBlocks == 1) cpuFinalThreshold = 1;
+
+        // allocate mem for the result on host side
+        T* h_odata = (T*) malloc(numBlocks*sizeof(T));
+
+        shrLog("%d blocks\n\n", numBlocks);
+
+        // allocate device memory and data
+        T* d_idata = NULL;
+        T* d_odata = NULL;
+
+        cutilSafeCallNoSync( cudaMalloc((void**) &d_idata, bytes) );
+        cutilSafeCallNoSync( cudaMalloc((void**) &d_odata, numBlocks*sizeof(T)) );
+
+        // copy data directly to device memory
+        cutilSafeCallNoSync( cudaMemcpy(d_idata, h_idata, bytes, cudaMemcpyHostToDevice) );
+        cutilSafeCallNoSync( cudaMemcpy(d_odata, h_idata, numBlocks*sizeof(T), cudaMemcpyHostToDevice) );
+
+        // warm-up
+        sumreduce<T>(size, numThreads, numBlocks, whichKernel, d_idata, d_odata);
+        
+        int testIterations = 100;
+
+        unsigned int timer = 0;
+        cutilCheckError( cutCreateTimer( &timer));
+        
+        T gpu_result = 0;
+
+        gpu_result = benchmarkReduceMin<T>(size, numThreads, numBlocks, maxThreads, maxBlocks,
+                                        whichKernel, testIterations, cpuFinalReduction, 
+                                        cpuFinalThreshold, timer,
+                                        h_odata, d_idata, d_odata);
+
+		double reduceTime = cutGetAverageTimerValue(timer) * 1e-3;
+        shrLogEx(LOGBOTH | MASTER, 0, "Reduction, Throughput = %.4f GB/s, Time = %.5f s, Size = %u Elements, NumDevsUsed = %d, Workgroup = %u\n", 
+               1.0e-9 * ((double)bytes)/reduceTime, reduceTime, size, 1, numThreads);
+
+        // compute reference solution
+        T cpu_result = sumreduceCPU<T>(h_idata, size);
+
+        double threshold = 1e-12;
+        double diff = 0;
+		
+        if (datatype == REDUCE_INT)
+        {
+            shrLog("\nGPU result = %d\n", gpu_result);
+            shrLog("CPU result = %d\n\n", cpu_result);
+        }
+        else
+        {
+            shrLog("\nGPU result = %f\n", gpu_result);
+            shrLog("CPU result = %f\n\n", cpu_result);
+
+            if (datatype == REDUCE_FLOAT)
+                threshold = 1e-8 * size;
+            diff = fabs((double)gpu_result - (double)cpu_result);
+        }
+
+        // cleanup
+        cutilCheckError( cutDeleteTimer(timer) );
+        free(h_idata);
+        free(h_odata);
+
+        cutilSafeCallNoSync(cudaFree(d_idata));
+        cutilSafeCallNoSync(cudaFree(d_odata));
+
+		if (datatype == REDUCE_INT) {
+			return (gpu_result == cpu_result);
+		} else {
+			return (diff < threshold);
+		}
+	}
+	return true;
+}
+////////////////////////////////////////////////////////////////////////////////
+// The main function whihc runs the reduction test.
+////////////////////////////////////////////////////////////////////////////////
+template <class T>
+bool
+runTestMax( int argc, char** argv, ReduceType datatype) 
+{
+    int size = 1<<24;    // number of elements to reduce
+    int maxThreads = 256;  // number of threads per block
+    int whichKernel = 6;
+    int maxBlocks = 64;
+    bool cpuFinalReduction = false;
+    int cpuFinalThreshold = 1;
+
+    cutGetCmdLineArgumenti( argc, (const char**) argv, "n", &size);
+    cutGetCmdLineArgumenti( argc, (const char**) argv, "threads", &maxThreads);
+    cutGetCmdLineArgumenti( argc, (const char**) argv, "kernel", &whichKernel);
+    cutGetCmdLineArgumenti( argc, (const char**) argv, "maxblocks", &maxBlocks);
+    
+		shrLog("METHOD: MAX\n");
+    shrLog("%d elements\n", size);
+    shrLog("%d threads (max)\n", maxThreads);
+
+    cpuFinalReduction = (cutCheckCmdLineFlag( argc, (const char**) argv, "cpufinal") == CUTTrue);
+    cutGetCmdLineArgumenti( argc, (const char**) argv, "cputhresh", &cpuFinalThreshold);
+
+    bool runShmoo = (cutCheckCmdLineFlag(argc, (const char**) argv, "shmoo") == CUTTrue);
+
+    if (runShmoo)
+    {
+        shmoo<T>(1, 33554432, maxThreads, maxBlocks, datatype);
+    }
+    else
+    {
+
+        // create random input data on CPU
+        unsigned int bytes = size * sizeof(T);
+
+        T *h_idata = (T *) malloc(bytes);
+
+        for(int i=0; i<size; i++) 
+        {
+            // Keep the numbers small so we don't get truncation error in the sum
+            if (datatype == REDUCE_INT)
+                h_idata[i] = (T)(rand() & 0xFF);
+            else
+                h_idata[i] = (rand() & 0xFF) / (T)RAND_MAX;
+        }
+
+        int numBlocks = 0;
+        int numThreads = 0;
+        getNumBlocksAndThreads(whichKernel, size, maxBlocks, maxThreads, numBlocks, numThreads);
+        if (numBlocks == 1) cpuFinalThreshold = 1;
+
+        // allocate mem for the result on host side
+        T* h_odata = (T*) malloc(numBlocks*sizeof(T));
+
+        shrLog("%d blocks\n\n", numBlocks);
+
+        // allocate device memory and data
+        T* d_idata = NULL;
+        T* d_odata = NULL;
+
+        cutilSafeCallNoSync( cudaMalloc((void**) &d_idata, bytes) );
+        cutilSafeCallNoSync( cudaMalloc((void**) &d_odata, numBlocks*sizeof(T)) );
+
+        // copy data directly to device memory
+        cutilSafeCallNoSync( cudaMemcpy(d_idata, h_idata, bytes, cudaMemcpyHostToDevice) );
+        cutilSafeCallNoSync( cudaMemcpy(d_odata, h_idata, numBlocks*sizeof(T), cudaMemcpyHostToDevice) );
+
+        // warm-up
+        sumreduce<T>(size, numThreads, numBlocks, whichKernel, d_idata, d_odata);
+        
+        int testIterations = 100;
+
+        unsigned int timer = 0;
+        cutilCheckError( cutCreateTimer( &timer));
+        
+        T gpu_result = 0;
+
+        gpu_result = benchmarkReduceMax<T>(size, numThreads, numBlocks, maxThreads, maxBlocks,
+                                        whichKernel, testIterations, cpuFinalReduction, 
+                                        cpuFinalThreshold, timer,
+                                        h_odata, d_idata, d_odata);
+
+		double reduceTime = cutGetAverageTimerValue(timer) * 1e-3;
+        shrLogEx(LOGBOTH | MASTER, 0, "Reduction, Throughput = %.4f GB/s, Time = %.5f s, Size = %u Elements, NumDevsUsed = %d, Workgroup = %u\n", 
+               1.0e-9 * ((double)bytes)/reduceTime, reduceTime, size, 1, numThreads);
+
+        // compute reference solution
+        T cpu_result = sumreduceCPU<T>(h_idata, size);
 
         double threshold = 1e-12;
         double diff = 0;

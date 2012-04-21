@@ -67,7 +67,7 @@ struct SharedMemory<double>
    inefficient */
 template <class T>
 __global__ void
-reduce0(T *g_idata, T *g_odata, unsigned int n)
+sumreduce0(T *g_idata, T *g_odata, unsigned int n)
 {
     T *sdata = SharedMemory<T>();
 
@@ -97,7 +97,7 @@ reduce0(T *g_idata, T *g_odata, unsigned int n)
 */
 template <class T>
 __global__ void
-reduce1(T *g_idata, T *g_odata, unsigned int n)
+sumreduce1(T *g_idata, T *g_odata, unsigned int n)
 {
     T *sdata = SharedMemory<T>();
 
@@ -130,7 +130,7 @@ reduce1(T *g_idata, T *g_odata, unsigned int n)
 */
 template <class T>
 __global__ void
-reduce2(T *g_idata, T *g_odata, unsigned int n)
+sumreduce2(T *g_idata, T *g_odata, unsigned int n)
 {
     T *sdata = SharedMemory<T>();
 
@@ -162,7 +162,7 @@ reduce2(T *g_idata, T *g_odata, unsigned int n)
 */
 template <class T>
 __global__ void
-reduce3(T *g_idata, T *g_odata, unsigned int n)
+sumreduce3(T *g_idata, T *g_odata, unsigned int n)
 {
     T *sdata = SharedMemory<T>();
 
@@ -202,7 +202,7 @@ reduce3(T *g_idata, T *g_odata, unsigned int n)
 */
 template <class T, unsigned int blockSize>
 __global__ void
-reduce4(T *g_idata, T *g_odata, unsigned int n)
+sumreduce4(T *g_idata, T *g_odata, unsigned int n)
 {
     T *sdata = SharedMemory<T>();
 
@@ -258,7 +258,7 @@ reduce4(T *g_idata, T *g_odata, unsigned int n)
 */
 template <class T, unsigned int blockSize>
 __global__ void
-reduce5(T *g_idata, T *g_odata, unsigned int n)
+sumreduce5(T *g_idata, T *g_odata, unsigned int n)
 {
     T *sdata = SharedMemory<T>();
 
@@ -308,7 +308,7 @@ reduce5(T *g_idata, T *g_odata, unsigned int n)
 */
 template <class T, unsigned int blockSize, bool nIsPow2>
 __global__ void
-reduce6(T *g_idata, T *g_odata, unsigned int n)
+sumreduce6(T *g_idata, T *g_odata, unsigned int n)
 {
     T *sdata = SharedMemory<T>();
 
@@ -371,7 +371,7 @@ bool isPow2(unsigned int x);
 ////////////////////////////////////////////////////////////////////////////////
 template <class T>
 void 
-reduce(int size, int threads, int blocks, 
+sumreduce(int size, int threads, int blocks, 
        int whichKernel, T *d_idata, T *d_odata)
 {
     dim3 dimBlock(threads, 1, 1);
@@ -385,65 +385,65 @@ reduce(int size, int threads, int blocks,
     switch (whichKernel)
     {
     case 0:
-        reduce0<T><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+        sumreduce0<T><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
         break;
     case 1:
-        reduce1<T><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+        sumreduce1<T><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
         break;
     case 2:
-        reduce2<T><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+        sumreduce2<T><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
         break;
     case 3:
-        reduce3<T><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
+        sumreduce3<T><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size);
         break;
     case 4:
         switch (threads)
         {
         case 512:
-            reduce4<T, 512><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+            sumreduce4<T, 512><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
         case 256:
-            reduce4<T, 256><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+            sumreduce4<T, 256><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
         case 128:
-            reduce4<T, 128><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+            sumreduce4<T, 128><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
         case 64:
-            reduce4<T,  64><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+            sumreduce4<T,  64><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
         case 32:
-            reduce4<T,  32><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+            sumreduce4<T,  32><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
         case 16:
-            reduce4<T,  16><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+            sumreduce4<T,  16><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
         case  8:
-            reduce4<T,   8><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+            sumreduce4<T,   8><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
         case  4:
-            reduce4<T,   4><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+            sumreduce4<T,   4><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
         case  2:
-            reduce4<T,   2><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+            sumreduce4<T,   2><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
         case  1:
-            reduce4<T,   1><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+            sumreduce4<T,   1><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
         }
         break; 
     case 5:
         switch (threads)
         {
         case 512:
-            reduce5<T, 512><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+            sumreduce5<T, 512><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
         case 256:
-            reduce5<T, 256><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+            sumreduce5<T, 256><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
         case 128:
-            reduce5<T, 128><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+            sumreduce5<T, 128><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
         case 64:
-            reduce5<T,  64><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+            sumreduce5<T,  64><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
         case 32:
-            reduce5<T,  32><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+            sumreduce5<T,  32><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
         case 16:
-            reduce5<T,  16><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+            sumreduce5<T,  16><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
         case  8:
-            reduce5<T,   8><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+            sumreduce5<T,   8><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
         case  4:
-            reduce5<T,   4><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+            sumreduce5<T,   4><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
         case  2:
-            reduce5<T,   2><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+            sumreduce5<T,   2><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
         case  1:
-            reduce5<T,   1><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+            sumreduce5<T,   1><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
         }
         break;       
     case 6:
@@ -453,25 +453,25 @@ reduce(int size, int threads, int blocks,
             switch (threads)
             {
             case 512:
-                reduce6<T, 512, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+                sumreduce6<T, 512, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
             case 256:
-                reduce6<T, 256, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+                sumreduce6<T, 256, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
             case 128:
-                reduce6<T, 128, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+                sumreduce6<T, 128, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
             case 64:
-                reduce6<T,  64, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+                sumreduce6<T,  64, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
             case 32:
-                reduce6<T,  32, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+                sumreduce6<T,  32, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
             case 16:
-                reduce6<T,  16, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+                sumreduce6<T,  16, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
             case  8:
-                reduce6<T,   8, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+                sumreduce6<T,   8, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
             case  4:
-                reduce6<T,   4, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+                sumreduce6<T,   4, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
             case  2:
-                reduce6<T,   2, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+                sumreduce6<T,   2, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
             case  1:
-                reduce6<T,   1, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+                sumreduce6<T,   1, true><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
             }
         }
         else
@@ -479,25 +479,25 @@ reduce(int size, int threads, int blocks,
             switch (threads)
             {
             case 512:
-                reduce6<T, 512, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+                sumreduce6<T, 512, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
             case 256:
-                reduce6<T, 256, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+                sumreduce6<T, 256, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
             case 128:
-                reduce6<T, 128, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+                sumreduce6<T, 128, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
             case 64:
-                reduce6<T,  64, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+                sumreduce6<T,  64, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
             case 32:
-                reduce6<T,  32, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+                sumreduce6<T,  32, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
             case 16:
-                reduce6<T,  16, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+                sumreduce6<T,  16, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
             case  8:
-                reduce6<T,   8, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+                sumreduce6<T,   8, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
             case  4:
-                reduce6<T,   4, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+                sumreduce6<T,   4, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
             case  2:
-                reduce6<T,   2, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+                sumreduce6<T,   2, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
             case  1:
-                reduce6<T,   1, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
+                sumreduce6<T,   1, false><<< dimGrid, dimBlock, smemSize >>>(d_idata, d_odata, size); break;
             }
         }
         break;       
@@ -506,15 +506,15 @@ reduce(int size, int threads, int blocks,
 
 // Instantiate the reduction function for 3 types
 template void 
-reduce<int>(int size, int threads, int blocks, 
+sumreduce<int>(int size, int threads, int blocks, 
             int whichKernel, int *d_idata, int *d_odata);
 
 template void 
-reduce<float>(int size, int threads, int blocks, 
+sumreduce<float>(int size, int threads, int blocks, 
               int whichKernel, float *d_idata, float *d_odata);
               
 template void 
-reduce<double>(int size, int threads, int blocks, 
+sumreduce<double>(int size, int threads, int blocks, 
                int whichKernel, double *d_idata, double *d_odata);
 
 
