@@ -45,7 +45,7 @@
 #include <shrQATest.h>
 #include "cutil_inline.h"
 #include <algorithm>
-
+#include <iostream>
 // includes, project
 #include "reduction.h"
 
@@ -228,30 +228,24 @@ T sumreduceCPU(T *data, int size)
 template<class T>
 T minreduceCPU(T *data, int size)
 {
-    T sum = data[0];
-    T c = (T)0.0;              
+    T min = data[0];
     for (int i = 1; i < size; i++)
     {
-        T y = data[i] - c;  
-        T t = sum + y;      
-        c = (t - sum) - y;  
-        sum = t;            
+	    if(data[i] < min)
+		    min = data[i];
     }
-    return sum;
+    return min;
 }
 template<class T>
 T maxreduceCPU(T *data, int size)
 {
-    T sum = data[0];
-    T c = (T)0.0;              
+    T max = data[0];
     for (int i = 1; i < size; i++)
     {
-        T y = data[i] - c;  
-        T t = sum + y;      
-        c = (t - sum) - y;  
-        sum = t;            
+	    if(data[i] > max)
+		    max = data[i];
     }
-    return sum;
+    return max;
 }
 
 unsigned int nextPow2( unsigned int x ) {
@@ -268,7 +262,7 @@ unsigned int nextPow2( unsigned int x ) {
 #define MIN(x,y) ((x < y) ? x : y)
 #endif
 
-////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
 // Compute the number of threads and blocks to use for the given reduction kernel
 // For the kernels >= 3, we set threads / block to the minimum of maxThreads and
 // n/2. For kernels < 3, we set to the minimum of maxThreads and n.  For kernel 
@@ -418,7 +412,7 @@ T benchmarkReduceMin(int  n,
         cutilCheckError( cutStartTimer( timer));
 
         // execute the kernel
-        sumreduce<T>(n, numThreads, numBlocks, whichKernel, d_idata, d_odata);
+        minreduce<T>(n, numThreads, numBlocks, whichKernel, d_idata, d_odata);
 
         // check if kernel execution generated an error
         cutilCheckMsg("Kernel execution failed");
@@ -446,7 +440,7 @@ T benchmarkReduceMin(int  n,
                 int threads = 0, blocks = 0;
                 getNumBlocksAndThreads(kernel, s, maxBlocks, maxThreads, blocks, threads);
                 
-                sumreduce<T>(s, threads, blocks, kernel, d_odata, d_odata);
+                minreduce<T>(s, threads, blocks, kernel, d_odata, d_odata);
                 
                 if (kernel < 3)
                     s = (s + threads - 1) / threads;
@@ -510,7 +504,7 @@ T benchmarkReduceMax(int  n,
         cutilCheckError( cutStartTimer( timer));
 
         // execute the kernel
-        sumreduce<T>(n, numThreads, numBlocks, whichKernel, d_idata, d_odata);
+        maxreduce<T>(n, numThreads, numBlocks, whichKernel, d_idata, d_odata);
 
         // check if kernel execution generated an error
         cutilCheckMsg("Kernel execution failed");
@@ -538,7 +532,7 @@ T benchmarkReduceMax(int  n,
                 int threads = 0, blocks = 0;
                 getNumBlocksAndThreads(kernel, s, maxBlocks, maxThreads, blocks, threads);
                 
-                sumreduce<T>(s, threads, blocks, kernel, d_odata, d_odata);
+                maxreduce<T>(s, threads, blocks, kernel, d_odata, d_odata);
                 
                 if (kernel < 3)
                     s = (s + threads - 1) / threads;
@@ -805,7 +799,7 @@ runTestMin( int argc, char** argv, ReduceType datatype)
     cutGetCmdLineArgumenti( argc, (const char**) argv, "kernel", &whichKernel);
     cutGetCmdLineArgumenti( argc, (const char**) argv, "maxblocks", &maxBlocks);
     
-		shrLog("METHOD: MIN\n");
+	shrLog("METHOD: MIN\n");
     shrLog("%d elements\n", size);
     shrLog("%d threads (max)\n", maxThreads);
 

@@ -17,6 +17,7 @@
 #define _REDUCE_KERNEL_H_
 
 #include <stdio.h>
+#include "math_functions.h"
 
 // Utility class used to avoid linker errors with extern
 // unsized shared memory arrays with templated type
@@ -136,29 +137,37 @@ minreduce6(T *g_idata, T *g_odata, unsigned int n)
     unsigned int i = blockIdx.x*blockSize*2 + threadIdx.x;
     unsigned int gridSize = blockSize*2*gridDim.x;
     
-    T mySum = 0;
-
+    T myMin = g_idata[i];
     // we reduce multiple elements per thread.  The number is determined by the 
     // number of active thread blocks (via gridDim).  More blocks will result
     // in a larger gridSize and therefore fewer elements per thread
-    while (i < n)
-    {         
-        mySum += g_idata[i];
+/*    while (i < n)
+    {
+        myMin = min(g_idata[i], myMin);
         // ensure we don't read out of bounds -- this is optimized away for powerOf2 sized arrays
         if (nIsPow2 || i + blockSize < n) 
-            mySum += g_idata[i+blockSize];  
+        	myMin = min(g_idata[i + blockSize], myMin);
+        i += gridSize;
+    } */
+
+    while (i < n)
+    { 
+        myMin = min(myMin, g_idata[i]);// < myMin ? g_idata[i] : myMin;//g_idata[i];
+        // ensure we don't read out of bounds -- this is optimized away for powerOf2 sized arrays
+       if (nIsPow2 + blockSize < n)
+	       myMin = min(myMin, g_idata[i+blockSize]);  
         i += gridSize;
     } 
 
     // each thread puts its local sum into shared memory 
-    sdata[tid] = mySum;
+    sdata[tid] = myMin;
     __syncthreads();
 
 
     // do reduction in shared mem
-    if (blockSize >= 512) { if (tid < 256) { sdata[tid] = mySum = mySum + sdata[tid + 256]; } __syncthreads(); }
-    if (blockSize >= 256) { if (tid < 128) { sdata[tid] = mySum = mySum + sdata[tid + 128]; } __syncthreads(); }
-    if (blockSize >= 128) { if (tid <  64) { sdata[tid] = mySum = mySum + sdata[tid +  64]; } __syncthreads(); }
+    if (blockSize >= 512) { if (tid < 256) { sdata[tid] = myMin = min(sdata[tid + 256], myMin); } __syncthreads(); }
+    if (blockSize >= 256) { if (tid < 128) { sdata[tid] = myMin = min(sdata[tid + 128], myMin); } __syncthreads(); }
+    if (blockSize >= 128) { if (tid < 64) { sdata[tid] = myMin = min(sdata[tid + 64], myMin); } __syncthreads(); }
     
     if (tid < 32)
     {
@@ -166,12 +175,12 @@ minreduce6(T *g_idata, T *g_odata, unsigned int n)
         // we need to declare our shared memory volatile so that the compiler
         // doesn't reorder stores to it and induce incorrect behavior.
         volatile T* smem = sdata;
-        if (blockSize >=  64) { smem[tid] = mySum = mySum + smem[tid + 32]; }
-        if (blockSize >=  32) { smem[tid] = mySum = mySum + smem[tid + 16]; }
-        if (blockSize >=  16) { smem[tid] = mySum = mySum + smem[tid +  8]; }
-        if (blockSize >=   8) { smem[tid] = mySum = mySum + smem[tid +  4]; }
-        if (blockSize >=   4) { smem[tid] = mySum = mySum + smem[tid +  2]; }
-        if (blockSize >=   2) { smem[tid] = mySum = mySum + smem[tid +  1]; }
+        if (blockSize >=  64) { smem[tid] = myMin = min(smem[tid + 32], myMin); }
+        if (blockSize >=  32) { smem[tid] = myMin = min(smem[tid + 16], myMin); }
+        if (blockSize >=  16) { smem[tid] = myMin = min(smem[tid + 8], myMin); }
+        if (blockSize >=  8) { smem[tid] = myMin = min(smem[tid + 4], myMin); }
+        if (blockSize >=  4) { smem[tid] = myMin = min(smem[tid + 2], myMin); }
+        if (blockSize >=  2) { smem[tid] = myMin = min(smem[tid + 1], myMin); }
     }
     
     // write result for this block to global mem 
@@ -192,29 +201,37 @@ maxreduce6(T *g_idata, T *g_odata, unsigned int n)
     unsigned int i = blockIdx.x*blockSize*2 + threadIdx.x;
     unsigned int gridSize = blockSize*2*gridDim.x;
     
-    T mySum = 0;
-
+    T myMax = g_idata[i];
     // we reduce multiple elements per thread.  The number is determined by the 
     // number of active thread blocks (via gridDim).  More blocks will result
     // in a larger gridSize and therefore fewer elements per thread
-    while (i < n)
-    {         
-        mySum += g_idata[i];
+/*    while (i < n)
+    {
+        myMin = min(g_idata[i], myMin);
         // ensure we don't read out of bounds -- this is optimized away for powerOf2 sized arrays
         if (nIsPow2 || i + blockSize < n) 
-            mySum += g_idata[i+blockSize];  
+        	myMin = min(g_idata[i + blockSize], myMin);
+        i += gridSize;
+    } */
+
+    while (i < n)
+    { 
+        myMax = max(myMax, g_idata[i]);// < myMin ? g_idata[i] : myMin;//g_idata[i];
+        // ensure we don't read out of bounds -- this is optimized away for powerOf2 sized arrays
+       if (nIsPow2 + blockSize < n)
+	       myMax = max(myMax, g_idata[i+blockSize]);  
         i += gridSize;
     } 
 
     // each thread puts its local sum into shared memory 
-    sdata[tid] = mySum;
+    sdata[tid] = myMax;
     __syncthreads();
 
 
     // do reduction in shared mem
-    if (blockSize >= 512) { if (tid < 256) { sdata[tid] = mySum = mySum + sdata[tid + 256]; } __syncthreads(); }
-    if (blockSize >= 256) { if (tid < 128) { sdata[tid] = mySum = mySum + sdata[tid + 128]; } __syncthreads(); }
-    if (blockSize >= 128) { if (tid <  64) { sdata[tid] = mySum = mySum + sdata[tid +  64]; } __syncthreads(); }
+    if (blockSize >= 512) { if (tid < 256) { sdata[tid] = myMax = max(sdata[tid + 256], myMax); } __syncthreads(); }
+    if (blockSize >= 256) { if (tid < 128) { sdata[tid] = myMax = max(sdata[tid + 128], myMax); } __syncthreads(); }
+    if (blockSize >= 128) { if (tid < 64) { sdata[tid] = myMax = max(sdata[tid + 64], myMax); } __syncthreads(); }
     
     if (tid < 32)
     {
@@ -222,12 +239,12 @@ maxreduce6(T *g_idata, T *g_odata, unsigned int n)
         // we need to declare our shared memory volatile so that the compiler
         // doesn't reorder stores to it and induce incorrect behavior.
         volatile T* smem = sdata;
-        if (blockSize >=  64) { smem[tid] = mySum = mySum + smem[tid + 32]; }
-        if (blockSize >=  32) { smem[tid] = mySum = mySum + smem[tid + 16]; }
-        if (blockSize >=  16) { smem[tid] = mySum = mySum + smem[tid +  8]; }
-        if (blockSize >=   8) { smem[tid] = mySum = mySum + smem[tid +  4]; }
-        if (blockSize >=   4) { smem[tid] = mySum = mySum + smem[tid +  2]; }
-        if (blockSize >=   2) { smem[tid] = mySum = mySum + smem[tid +  1]; }
+        if (blockSize >=  64) { smem[tid] = myMax = max(smem[tid + 32], myMax); }
+        if (blockSize >=  32) { smem[tid] = myMax = max(smem[tid + 16], myMax); }
+        if (blockSize >=  16) { smem[tid] = myMax = max(smem[tid + 8], myMax); }
+        if (blockSize >=  8) { smem[tid] = myMax = max(smem[tid + 4], myMax); }
+        if (blockSize >=  4) { smem[tid] = myMax = max(smem[tid + 2], myMax); }
+        if (blockSize >=  2) { smem[tid] = myMax = max(smem[tid + 1], myMax); }
     }
     
     // write result for this block to global mem 
