@@ -1,0 +1,23 @@
+==========================================================================
+Names: Dakota Szabo [szabod], Noah Zimmt [zimmtn]
+Assignment #5, CUDA/MPI Reductions
+CSCI-4320: Parallel Computing (Carothers)
+==========================================================================
+
+//////////////////////////////////////////////////////////////////////////
+
+Final Writeup located in assignment5/writeup.pdf.  Graphs embedded.
+
+//////////////////////////////////////////////////////////////////////////
+
+CUDA: 
+  How to find our source code:
+    We modified the reduction.cpp and reduction.cu files located in 
+    cuda/C/src/reduction/.
+
+MPI:
+  Source code is located in reduce.c.  Makefile is included.
+  - results/: Contains data plottable w/ GNUPlot
+  - raw_output/: Contains raw output from BlueGene
+  - collected.txt: More raw output
+  - Various intermediate graphs/output files/scripts included.
