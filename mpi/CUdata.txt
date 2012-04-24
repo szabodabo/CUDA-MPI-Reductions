@@ -1,0 +1,8 @@
+(doubles)
+92.7729 GB/s (SUM)
+92.6014 GB/s (MIN)
+92.7552 GB/s (MAX)
+(ints)
+90.8413 GB/s (SUM)
+90.7905 GB/s (MIN)
+90.7969 GB/s (MAX)
