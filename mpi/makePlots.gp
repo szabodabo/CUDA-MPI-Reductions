@@ -2,7 +2,8 @@ set term postscript eps enhanced color
 
 set xlabel "Number of MPI Ranks"
 set ylabel "Bandwidth (GB/sec)"
-set key left top
+set key bottom right
+ 
 f(x) = 90.8413 
 g(x) = 90.7905
 h(x) = 90.7969
